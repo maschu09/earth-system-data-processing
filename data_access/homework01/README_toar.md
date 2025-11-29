@@ -1,0 +1,25 @@
+Nils Hornstein, 7369566
+
+Identification of a Dataset
+
+To identify a specific dataset to work with, I went with the tip and picked air quality as a broad topic to focus on. In this context, I selected a specific variable later on. I started by organizing the list of given suggestions. Therefore, I created a table containing all datasets as entries and evaluated them regarding the type of data, the resolution and scope, ease of use and accessibility, and if applicable special features as well as the areas of application. To support this step and speed up the process, I designed a suitable LLM prompt: 
+
+“Erstelle eine Vergleichstabelle für Wissenschaftler zum Thema Wetter-, Klima- und Erdbeobachtungsdaten. Die Tabelle soll den späteren Auswahlprozess eines Datensatzes unterstützen. Tabellenspalten: Art der Daten, Auflösung/Umfang (zeitlich und räumlich mit Einheiten), Benutzerfreundlichkeit/Zugänglichkeit (Begründung und vergebe eine Note schlecht, mittel, gut oder sehr gut), Besonderheiten/Einsatzbereiche. Bleib bei der Evaluation der einzelnen Datensätze kurz und präzise. Nutze die folgenden Datenquellen: [Namen + Links].”
+
+Based on the table that ChatGPT-5 created using the prompt, I have selected two datasets that I find interesting regarding the overarching topic of air quality - the TOAR as well as the IAGOS dataset. In the end, I opted for the TOAR data on global air quality for several reasons.
+First, TOAR appeared substantially more manageable for the scope of this assignment. While exploring both options, I felt somewhat overwhelmed by the complexity and breadth of the IAGOS dataset, which spans multiple data types, instruments, measurement platforms, and access pathways. In contrast, the TOAR data is supported by very clear, well-structured documentation that not only explains how to access the data but also provides sample code snippets in Python and even a dedicated GitLab repository from a user workshop containing additional Jupyter notebooks.
+Moreover, gaining access to TOAR data was considerably easier. Access was possible directly via Shibboleth using my University of Cologne account, which made the process straightforward and quick. The IAGOS dataset, on the other hand, required a much more involved registration workflow. This includes the creation of an additional AERIS account, completing a questionnaire, and submitting a request that needed approval. In summary, this made the IAGOS dataset less convenient and appealing. The clearer documentation, simpler access workflow, and overall lower complexity led me to choose TOAR as the more suitable dataset for this first assignment.
+
+Description of the TOAR Dataset
+
+The TOAR dataset is part of the TOAR database which is a central data repository for global data from surface ozone and ozone precursor measurements and indeed one of the largest collections of ozone-related surface measurements world-wide. Also, it is fully committed to Open Data and FAIR principles. All data is provided without restrictions under a CC-BY 4.0 license. Further, TOAR is an acronym standing for Tropospheric Ozone Assessment Report as it is intended to support scientists around the world and enable them to perform standardized analysis of ozone-related data. The TOAR database is operated by the Jülich Supercomputing Centre at Forschungszentrum Jülich in Germany. Overall, the TOAR database contains data from at almost 24,000 stations ranging from the 1970s up to 2022 and 2023. Thereby, the total data volume of the TOAR database is close to 10 Terabytes. The data comes from a collection of 18 large air quality monitoring networks like public data services as well as from many individual data providers. To ensure good quality of the data, only data from research-grade instruments is accepted and various types of quality control are used. This includes quality control exerted by the data provider itself as well as an automated quality control tool and even, in some cases, by manual inspections. Furthermore, as the TOAR data is used for scientific papers during TOAR-II, preliminary analyses of the data conducted during these are also implemented as a recursive feedback function. The TOAR database's data flagging scheme also makes it possible to distinguish the respective quality flags and to identify the origin of this evaluation.
+
+In terms of data access, the TOAR database offers two options. It can either be accessed through a graphical user interface, which they call dashboard, on the TOAR homepage, or through a search endpoint via a REST API which can be used in the browser or your own programs.  
+
+https://toar-data.fz-juelich.de/sphinx/TOAR_UG_Vol04_FAQ/build/html/TOAR_database.html 
+https://toar-data.org/about-toar-data/#about_data
+Schröder, S., Selke, N., and Schultz, M. G.: The TOAR data infrastructure: A generalised database infrastructure for environmental time series, EGU General Assembly 2023, Vienna, Austria, 24–28 Apr 2023, EGU23-1848, https://doi.org/10.5194/egusphere-egu23-1848, 2023 
+
+Data Access and Development of Download Script
+
+Scalability
