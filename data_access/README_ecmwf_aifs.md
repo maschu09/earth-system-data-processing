@@ -9,9 +9,11 @@
 
 This project demonstrates programmatic access to ECMWF's Artificial Intelligence/Integrated Forecasting System (AIFS) Single deterministic forecast data via the ECMWF Open Data API. 
 
-**About AIFS**: AIFS is a machine learning–based global weather forecasting model operational since February 2025, developed by ECMWF to complement the traditional physics-based Integrated Forecasting System (IFS). Built using the Anemoi toolkit, AIFS provides scalable components and pipelines for developing and training large AI-driven weather models. The current version was trained on ERA5 reanalysis data (1979–2018) and fine-tuned on operational IFS forecasts (2019–2020), using both pressure-level and surface variables along with auxiliary forcing information such as solar radiation.
+**About AIFS**: AIFS is a machine learning–based global weather forecasting model operational since February 2025, developed by ECMWF to complement the traditional physics-based Integrated Forecasting System (IFS). The current version was trained on ERA5 reanalysis data (1979–2018) and fine-tuned on operational IFS forecasts (2019–2020), using both pressure-level and surface variables along with auxiliary forcing information such as solar radiation.
 
-**Operational specifications**: AIFS produces global forecasts at 0.25° × 0.25° resolution (N320 grid, approximately 1,036,800 grid points) four times daily (00, 06, 12, 18 UTC), extending to 15 days ahead in 6-hourly forecast steps. Two operational configurations exist: AIFS Single (deterministic model, operational since 25 February 2025) and AIFS Ensemble (ensemble model, operational since 1 July 2025). This project focuses on AIFS Single surface forecasts. For detailed architecture and training methodology, see the notebook's first cell.
+**Operational specifications**: AIFS produces global forecasts at 0.25° × 0.25° resolution four times daily (00, 06, 12, 18 UTC), extending to 15 days ahead in 6-hourly forecast steps. Two operational configurations exist: AIFS Single (deterministic model, operational since 25 February 2025) and AIFS Ensemble (ensemble model, operational since 1 July 2025). This project focuses on AIFS Single surface forecasts. For detailed architecture and training methodology, see the notebook's first cell.
+
+**Note on model execution**: This project downloads pre-generated AIFS forecasts from ECMWF's operational runs. Users interested in running AIFS inference directly or training custom models can use the `anemoi-inference` package with model checkpoints from [HuggingFace](https://huggingface.co/ecmwf/aifs). See [ECMWF's AIFS training documentation](https://anemoi.readthedocs.io/projects/training/en/latest/) for model execution and retraining workflows.
 
 ## Repository Content
 
@@ -42,7 +44,7 @@ jupyter lab data_access/AIF.ipynb
 
 The notebook downloads AIFS Single surface forecasts for the **3 most recent complete days** (excluding today) with the following specifications:
 
-- **Spatial coverage**: Global (N320 grid: 1440 × 720 = 1,036,800 grid points)
+- **Spatial coverage**: Global 
 - **Temporal resolution**: 12 UTC initialization only
 - **Forecast steps**: +6h, +12h, +24h per day
 - **Variables**: 2m temperature (2t), 10m winds (10u, 10v), mean sea level pressure (msl)
@@ -52,7 +54,7 @@ The notebook downloads AIFS Single surface forecasts for the **3 most recent com
 The notebook includes a visualization component that generates a global 2m temperature map using a Robinson projection.
 
 **Performance**: Download execution time varies with network speed and ECMWF server load:
-- Actual runtime for this project: ~80 seconds for 9 files (~22 MB total)
+- Actual runtime for this project based on my internet: ~80 seconds for 9 files (~22 MB total)
 - ECMWF Open Data infrastructure demonstrated reliable availability during testing period
 
 ### Data Availability Constraints
