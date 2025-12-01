@@ -42,19 +42,18 @@ For a hurricane to develop, the SST needs to be greater than 26 °C according to
 There are some limitations of the SST14NA dataset. The regional coverage might exclude some parts of the atlantic, which might be necessary for a proper analysis. The resolution is only 14 km, so fine-scale ocean features might be missed. Because of the discontinued dataset, a comparison with more recent events is not possible.
 
 # How to scale data access and make code more user-friendly
-Access more data is with this dataset not a problem. With the GOES dataset, more datafiles would have been needed to download, which would have caused greater file sizes. If the file sizes would have been greater, there are several things to do to organize the data. This includes:
-- group the data by year, month, day etc.
-- group the data by region
-- group the data by specific events inside the time period
-
 For this homework, only a limited dataset (one season) was downloaded. In real-world applications, researchers may need multi-year or global datasets, which introduces challenges:
 1. Scalability:
     The python scripts (or any other programming language) must handle large volumes of data efficiently. Therefore, parallel downloads or an request prompt inside the python file could speed up the access. 
 2. Storage:
     Large datasets require structured storage solutions such as large servers at the office or cloud storage.
-3. user-friendly code:
+   Access more data is with this dataset not a problem. With the GOES dataset, more datafiles would have been needed to download, which would have caused greater file sizes. If the file sizes would have been greater, there are several things to do to organize the data. This includes:
+- group the data by year, month, day etc.
+- group the data by region
+- group the data by specific events inside the time period
+4. user-friendly code:
     The provided scripts should incluede clear instructions in how to access the data and change the download volume. Therefore a good documentation is needed. The script itself should kept clear and simple.
-4. Limits:
+5. Limits:
     There may be some limits to downloading the data from a source. This can be download quotas or server restrictions, network bandwidth or local storage capacity.
 
 Applied to the used dataset, no information could be found in restrictions according to the maximum download quotas. 
