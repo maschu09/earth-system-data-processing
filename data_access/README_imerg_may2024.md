@@ -1,203 +1,204 @@
 README – IMERG Global Precipitation (May 2024)
 
-Author: Mohammed Fawaz Nawaz
+Homework 1 — IMERG Global Precipitation (May 2024)
+Name: Mohammed Fawaz Nawaz
+Email: mnawaz@smail.uni-koeln.de
+Matriculation number: 7431597
 Course: Earth System Data Processing 1 (ESDP1), WS 2025/26
 Dataset: NASA GPM IMERG Half-Hourly (GPM_3IMERGHH.07)
 Time Period: 1–3 May 2024
 Notebook: load_imerg_mnawaz_may2024.ipynb
 
-1. Introduction
+1. Introduction:
 
-This README documents the process of identifying, accessing, and downloading the IMERG Half-Hourly precipitation dataset for Homework 1. IMERG (Integrated Multi-satellitE Retrievals for GPM) is produced by NASA’s Global Precipitation Measurement (GPM) mission and provides global precipitation estimates every 30 minutes at ~0.1° spatial resolution.
+This README documents the process of identifying, accessing, and downloading the NASA IMERG Half-Hourly precipitation dataset for Homework 1. IMERG (Integrated Multi-satellitE Retrievals for GPM):
 
-For the assignment, I selected May 1–3, 2024, fulfilling the requirement to process more than one day and implement a date loop with simple date arithmetic.
+- provides global precipitation estimates
 
-The dataset is openly documented but requires NASA Earthdata authentication to download from the official NASA GES DISC archive.
+- has a 30-minute temporal resolution
 
-2. Dataset Description
+- has a ~0.1° spatial resolution
 
-Provider: NASA GES DISC (Goddard Earth Sciences Data and Information Services Center)
+- is produced by the Global Precipitation Measurement (GPM) mission
 
-Product: IMERG Half-Hourly
+For this assignment:
 
+- I used the period May 1–3, 2024
+
+- Implemented a date loop over multiple days
+
+- Performed date arithmetic (conversion to Day-of-Year)
+
+- Accessed NASA GES DISC data via authenticated HTTP requests
+
+2. Dataset Description:
+
+Provider: NASA GES DISC
+Product: IMERG Half-Hourly (3IMERGHH)
 Version: V07B
-
 Format: HDF5 (.HDF5)
 
-Temporal Resolution: 30 minutes
+Dataset characteristics:
 
-Spatial Resolution: ~0.1°
+- Temporal resolution: 30 minutes
 
-Coverage: Global
+- Spatial resolution: ~0.1°
 
-Important IMERG Variables
+- Coverage: Global
 
-precipitationCal – Gauge-calibrated precipitation rate
+- Data volume: 48 files per day (~5–10 MB each)
 
-precipitationUncal – Raw uncalibrated estimate
+Key IMERG variables
 
-RandomError – Uncertainty estimate
+- precipitationCal – Gauge-calibrated precipitation rate
 
-Official Dataset Page
+- precipitationUncal – Uncalibrated satellite-based estimate
 
-https://disc.gsfc.nasa.gov/datasets/GPM_3IMERGHH_07/summary
+- RandomError – Quantified uncertainty field
+
+Official dataset page
+
+🔗 https://disc.gsfc.nasa.gov/datasets/GPM_3IMERGHH_07/summary
 
 3. Data Portal Evaluation & File Structure
 
-To access IMERG, I explored the NASA GES DISC portal. Key findings:
+To access IMERG, I explored the NASA GES DISC portal and documented the file organization.
 
-Directory Structure
-
-IMERG files are stored using a hierarchical structure:
-
+Directory structure
 /GPM_L3/GPM_3IMERGHH.07/YYYY/DOY/
 
 
-Where:
+YYYY = Year
 
-YYYY = year
+DOY = Day of Year (e.g., 122 = 1 May 2024)
 
-DOY = day of year (e.g., 122 = May 1, 2024)
-
-Filename Structure
-
-Example IMERG file:
-
+Example filename
 3B-HHR.MS.MRG.3IMERG.20240501-S000000-E002959.0000.V07B.HDF5
 
+Meaning of components
 
-Meaning:
+20240501 – Acquisition date
 
-20240501 → date
+S000000 – Start time (00:00 UTC)
 
-S000000 → start time (00:00)
+E002959 – End time (00:29 UTC)
 
-E002959 → end time (00:29)
+V07B – Product version
 
-V07B → version
-
-The dataset page provides clear metadata, variables, and documentation, but programmatic access requires a login workflow.
+The portal provides clean documentation, but downloading requires authenticated access.
 
 4. Data Access Method (Authentication Required)
 
-Accessing IMERG via GES DISC is not anonymous.
-The dataset requires:
+NASA IMERG data cannot be downloaded anonymously.
+
+Requirements
 
 - NASA Earthdata Login account
-- Approval of the “NASA GESDISC DATA ARCHIVE” application
-- Programmatic access via NASA EDL Application Token
-Authentication Attempts
 
-Several methods were attempted:
+- Approval for: NASA GESDISC DATA ARCHIVE
 
+- Programmatic access token (EDL Application Token)
+
+Authentication methods tested
 Method	Result
-Username + password	        --> 401 Unauthorized
-.netrc machine-based auth	--> 401 Unauthorized
-Cookies / redirect session	--> 401 Unauthorized
-EDL Application Token	    --> Successful
+Username + Password	❌ 401 Unauthorized
+.netrc machine credentials	❌ Failed
+Cookies / redirect session	❌ Failed
+Token-based Bearer Auth	✅ Successful
+Final working solution
 
-This confirms that for IMERG Half-Hourly (V07B), NASA enforces token-based security.
+Generated an Application Token via Earthdata Profile
 
-Final Working Method
-
-The download script uses:
+Used:
 
 Authorization: Bearer <token>
 
 
-in the HTTP header via a Python requests.Session().
+in all HTTP requests through a requests.Session() object.
 
-This method successfully downloads files after the token is generated under:
-
-Earthdata Profile → Applications → Create Application.
+This method successfully authenticated and allowed file downloads.
 
 5. Download Procedure Implemented
 
-The notebook follows these steps:
+The notebook performs the following steps:
 
-Define the date range: 2024-05-01 to 2024-05-03
+- Define date range: 2024-05-01 to 2024-05-03
 
-Convert each date into day-of-year (DOY)
+- Convert dates to DOY
 
-Construct the correct IMERG file URL
+- Construct IMERG URLs (using YYYY + DOY)
 
-Add NASA EDL token for authentication
+- Apply token authentication via header
 
-Download one IMERG Half-Hourly file per day
+- Download one IMERG Half-Hourly file per day
 
-Save files into the folder: imerg_data/
+- Save output to: imerg_data/
 
-Example successful output:
-
+Example console output
 Processing 2024-05-01
 Downloaded successfully!
-
 Processing 2024-05-02
 Downloaded successfully!
-
 Processing 2024-05-03
 Downloaded successfully!
 
 
-These files appear in the output folder with sizes of ~5–10 MB each.
+Files appear in the destination folder with expected sizes.
 
 6. Problems Encountered & Solutions
-✔ Authentication Issues
+✔ Authentication failures (main issue)
 
-The main challenge was multiple 401 Unauthorized errors using traditional login methods.
+Issues observed:
 
-Solutions attempted:
+- 401 errors despite correct credentials
 
-.netrc → Failed
+- Portal login worked, but programmatic login did not
 
-Cookies + redirect → Failed
+- .netrc, session cookies, and BasicAuth all failed
 
-BasicAuth → Failed
+- DAAC approval alone was insufficient
 
-Correct file paths verified → Still failed
+Final solution:
 
-DAAC approval verified → Still failed
+- Use a NASA EDL Application Token
 
-Final Solution:
-Generate an EDL Application Token and use it as a Bearer token in HTTP headers.
+- Pass it as a Bearer token in request headers
 
-✔ Complex directory structure
+- Directory + timestamp formatting
 
-The DOY (day-of-year) indexing required converting calendar dates to DOY.
+- IMERG uses DOY directories → required accurate conversion
 
-✔ File naming
+- Filenames are long and require correct zero-padded timestamps
 
-IMERG filenames are long; ensuring the correct timestamps was important.
+- Once solved, downloads worked reliably
 
-Once authentication and naming were correct, downloading worked smoothly.
+- After applying token auth + correct paths, all files downloaded without error.
 
 7. Scalability and Future Improvements
 
-If the script needs to scale (e.g., download a full month or year of IMERG):
+- If extending to longer periods (weeks–months):
 
-Performance Enhancements
+Performance improvements
 
-Parallel downloads (multiprocessing)
+- Parallel/multiprocess downloading
 
-Chunk-based file downloading
+- Retry logic for connection drops
 
-Using the AWS Open Data mirror (faster for large requests)
+- Buffered streaming for large files
 
-Code Improvements
+Usability improvements
 
-Retry logic for failed downloads
+- Configurable date ranges
 
-Automatic token refresh if it expires
+- Environment variable storage for tokens
 
-Logging instead of print statements
+- Logging instead of print() messages
 
-User-configurable date ranges and product versions
+S- torage considerations
 
-Storage Considerations
+- 48 files/day → ~0.5 GB per month
 
-IMERG produces 48 files per day.
-A full month ≈ 1.5–3 GB of data.
-Users should plan storage accordingly.
+- Long-term archives can reach several GB
 
 8. References
 
