@@ -2,10 +2,7 @@ jupyter
 numpy
 pandas
 matplotlib
-seaborn
 geopandas
 rasterio
-shapely
 sentinelhub
 xarray
-rioxarray
