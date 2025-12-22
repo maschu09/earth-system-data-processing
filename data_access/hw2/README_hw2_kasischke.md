@@ -72,3 +72,4 @@ c.retrieve(dataset, {
 ### To Do next: 
 - interpolate data to a healpix grid etc.
 - write README consistently
+- test flexibility of code --> no hardcoding
