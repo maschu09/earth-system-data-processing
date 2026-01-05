@@ -66,6 +66,10 @@ site/
 .env
 environment.yml.lock
 
-# --- OS files ---
-.DS_Store
-Thumbs.db
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+data_access/imerg_day/
+data_access/test_imerg.h5
+data_access/data/
