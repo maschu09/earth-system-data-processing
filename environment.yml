@@ -1,0 +1,41 @@
+﻿name: aifs
+channels:
+  - conda-forge
+dependencies:
+  # Core Python
+  - python=3.11
+  - pip
+
+  # Numerical + data handling
+  - numpy
+  - pandas
+  - scipy
+  - xarray
+  - netcdf4
+  - h5netcdf
+
+  # Plotting and mapping
+  - matplotlib
+  - cartopy
+  - shapely
+  - pyproj
+  - proj
+  - geos
+
+  # ECMWF GRIB support
+  - eccodes
+  - cfgrib
+
+  # Jupyter kernel support
+  - ipykernel
+
+  # Utilities
+  - requests
+  - tqdm
+
+  # Pip-only packages (from ECMWF)
+  - pip:
+      - earthkit-data
+      - ecmwf-opendata
+      - earthkit-plots
+      - earthkit-meteo
