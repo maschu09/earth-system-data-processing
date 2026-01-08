@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# Data files (should not be version controlled)
+*.nc
+*.grib
+*.grib2
+
+# Runtime directories
+data_access/data/
+data_access/processed/
+data_access/archive/
+data_access/logs/

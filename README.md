@@ -20,3 +20,9 @@ material for other data types if you find this repository useful.
 
 *Author:* Martin Schultz, Jülich Supercomputing Centre, Forschungszentrum Jülich & Department of Computer Science and Math, University of Cologne
 October 2025
+
+## ERA5 download example
+
+- Notebook: `data_access/download_era5.ipynb`
+- Install dependency: `pip install cdsapi`
+- Dependencies list: `requirements.txt`
