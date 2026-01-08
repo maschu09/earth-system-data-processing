@@ -1,17 +1,21 @@
 # Homework 2
-Johanna Kasischke
+Author: Johanna Kasischke
+Module: Earth System Data Processing
 
-1. control flow
-What is control flow?
-- determines which part of the program executes next
-- order, in which functions, statements etc. are executed
-- some programming languages have "control statements"
-    - e.g. if/else statements
-- by default,  programs run line by line from top to bottom
-- control structures alter the default flow
-    - conditionals
-    - loops
-    - function calls
+## Part 1: Set-up of control flow
+A control flow determines which part of the program, e.g. functions or statements, executes next. Some programming languages contain so called "control statements" (e.g. if/else statements). By default, a program runs line by line from top to bottom. With control structures (conditionals, loops, function calls), the default flow is altered.
+
+### Objective
+For the first part of the homework, we need to set-up a control flow that handles daily data. 
+The workflow will be tested with a mock processing that doesn't download any data.
+
+### Code implementation
+The mock testing can be done whith executing the file `control_flow.py`.
+
+First of all, the following modules are imported: `argparse`, `random`, and the `datetime, timedelta, date` subclasses from the `datetime`class.
+
+The only thing that need to be defined in the first place is the start date of the project or the dowloading period, respectively. Then some mock functions are created to design a workflow. 
+
 
 2. download ERA5 humidity data
 - search for data in copernicus data store
