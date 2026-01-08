@@ -1,7 +1,17 @@
-#Homework 2
+# Homework 2
 Johanna Kasischke
 
 1. control flow
+What is control flow?
+- determines which part of the program executes next
+- order, in which functions, statements etc. are executed
+- some programming languages have "control statements"
+    - e.g. if/else statements
+- by default,  programs run line by line from top to bottom
+- control structures alter the default flow
+    - conditionals
+    - loops
+    - function calls
 
 2. download ERA5 humidity data
 - search for data in copernicus data store
