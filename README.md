@@ -11,19 +11,20 @@ metadata standards, FAIR data.
 The course uses an inverse classroom concept, where the actual lectures are recorded, while students
 discuss the lecture content and work on practical examples during the course hours. The material 
 in this repository forms the basis for the practical exercises. Students will also be assigned 
-coding tasks as homework and the results shall be included here to establish a collection of useful routines 
+coding tasks as homework and the best results have been included here to establish a collection of useful routines 
 for other students and scientists who wish to learn the basics of Earth system data processing.
 
 *Note:* Due to the background of the lecturer, the focus of this material is on atmospheric data.
 Nevertheless, many concepts and routines can also be applied to other Earth system data. Feel free to contribute
 material for other data types if you find this repository useful.
 
+ HEAD
 *Author:* Martin Schultz, Jülich Supercomputing Centre, Forschungszentrum Jülich & Department of Computer Science and Math, University of Cologne
 October 2025
 
 # ***ESDP Homework 1***
 
-###### Author: Nagibe Maroun González
+ Author: Nagibe Maroun González
 
 
 
@@ -125,3 +126,21 @@ Nagibe Maroun González, Universität zu Köln, December 2025
 
 Copernicus Climate Change Service, Climate Data Store, (2018): Surface albedo 10-daily gridded data from 1981 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.ea87ed30 (Accessed on Dec-2025)
 
+
+## Author
+Martin Schultz, Jülich Supercomputing Centre, Forschungszentrum Jülich & Department of Computer Science and Math, University of Cologne
+
+## Contributors
+* Darya Fomicheva, 
+* Yeganeh Khabbazian, 
+* Laurenz Schindler, 
+* Patrick Seidel, 
+* Gaurav Somani
+
+## Version
+05 January 2026
+
+## License
+
+See `LICENSE` file for details.
+ 8fc217eeac4e95f05e295427729654b3130a4066
