@@ -1,0 +1,19 @@
+# --- Python / Jupyter ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+ 
+# --- Local configs / secrets ---
+.cdsapirc
+ 
+# --- Data products (do NOT commit large data) ---
+data/tmp/
+data/status/
+data/zarr/
+ 
+# Optional: if you created any figures folder
+figures/
+ 
+# --- OS ---
+Thumbs.db
