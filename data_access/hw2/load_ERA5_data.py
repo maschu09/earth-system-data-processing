@@ -1,5 +1,5 @@
 ### IMPORT MODULES
-import controll_flow as cf
+import ERA5_control_flow as cf
 
 
 ### PARAMETER TO CHANGE ###
@@ -13,4 +13,5 @@ end = "2024-12-05"
 
 DATASET = "reanalysis-era5-pressure-levels"
 
-cf.process_data(DATASET, start, end, VARIABLE,TIME, PRESSURE_LEVEL)
+
+cf.retrieve_and_process(DATASET, start, end, VARIABLE, TIME, PRESSURE_LEVEL)

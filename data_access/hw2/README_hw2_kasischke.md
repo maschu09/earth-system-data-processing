@@ -27,120 +27,22 @@ If no date is provided, the script is looking for missing data until today and r
 
 At the end of the script, two datasets were already added to the ARCHIVE folder to simulate a real scenario, where the code needs to look for missing data files. 
 
+## Part 2: Download ERA5 humidity data
+For the next part of the exercise, ERA5 humidity data should be downloaded from 2024-12-01 to 2024-12-05 in 6-hourly intervals on pressure levels 975, 900, 800, 500, 300 hPa in the original lat-lon resolution.
 
-2. download ERA5 humidity data
-- search for data in copernicus data store
-- looking for 6-hourly humidity ERA5 data on pressure levels
-- first try with this data set: https://cds.climate.copernicus.eu/datasets/derived-era5-pressure-levels-daily-statistics?tab=overview
-    - where is the difference in the post-processing to this data set?: https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=overview
+For this task the **ERA5 hourly data on pressure levels from 1940 to present** dataset is used. 
 
-- should we download data for the specific humidity or the relative humidity?
+### The Dataset: ERA5 hourly data on pressure levels from 1940 to present
 
-- generated corresping API request on website
-'''
-import cdsapi
+??????????????????????????
 
-dataset = "derived-era5-pressure-levels-daily-statistics"
-request = {
-    "product_type": "reanalysis",
-    "variable": ["specific_humidity"],
-    "year": "2024",
-    "month": ["12"],
-    "day": [
-        "01", "02", "03",
-        "04", "05"
-    ],
-    "pressure_level": [
-        "300", "500", "800",
-        "900", "975"
-    ],
-    "daily_statistic": "daily_mean",
-    "time_zone": "utc+00:00",
-    "frequency": "6_hourly"
-}
-
-client = cdsapi.Client()
-client.retrieve(dataset, request).download()
-'''
-
-- created virtualenv to work with xarray and don't get any problems with other pre-installed stuff
-
-- changed code to 
-import cdsapi
-
-c = cdsapi.Client()
-
-dataset = "derived-era5-pressure-levels-daily-statistics"
-#request = {
-c.retrieve(dataset, {
-    "product_type": "reanalysis",
-    "variable": ["specific_humidity"],
-    "year": "2024",
-    "month": ["12"],
-    "day": [
-        "01", "02", "03",
-        "04", "05"
-    ],
-    "pressure_level": [
-        "300", "500", "800",
-        "900", "975"
-    ],
-    "daily_statistic": "daily_mean",
-    "time_zone": "utc+00:00",
-    "frequency": "6_hourly",
-    "grid": "5.625/5.625",
-    "format": "netcdf"
-}, "output")
-
-- installed every dependency from this website for xarray: https://docs.xarray.dev/en/stable/getting-started-guide/installing.html
-
-### To Do next: 
-- interpolate data to a healpix grid etc.
-- write README consistently
-- test flexibility of code --> no hardcoding
-
-**30.12.2025**
-
-- created conda environment on macbook to be able to work there as well
-- flexible download routine
-
-- research healpix grid https://healpix.sourceforge.io/
-- installed healpy via pip
-- 
-
-
-
-The standard coordinates are the colatitude (theta),0 at the North Pole, pi/2 at the equator and pi at the South Pole and the longitude (Phi) between 0 and 2 pi eastward, in a Mollview projection,phi=0 is at the center and increases eastward toward the left of the map.
-
-1. What “within the daily batch” means in practice
-For each day:
-download ERA5 day
-→ open NetCDF
-→ regrid to HEALPix NSIDE=8
-→ regrid to HEALPix NSIDE=16
-→ (later: write both to Zarr)
-→ move to next day
-❌ Not allowed:
-download all days first
-regrid everything at once later
-
-did everything wrong -> need to start with first task!!!
-
-
-02.01.2026
-
-- research for first part of homework
-found this https://dev.to/kiprotichterer/extracting-data-from-an-api-using-python-requests-4h5
-https://pyquesthub.com/data-extraction-from-apis-using-python-a-step-by-step-guide
-
-
-## 2nd part of exercise
+### The Code:
 To download the data, the script "load_ERA5_data.py" is important and only to use. the "real" work happens in the "controll_flow.py" script.
 
 1. "load_ERA5_data.py" script
 Here, the variable, pressure level and start and end date of the download can be changed. All other variables remain fixed in the "controll_flow.py" file.
 
-2. "controll_flow.py" script
+2. "ERA5_control_flow.py" script
 This file contains two functions. The first function *retrieve_data* is used to retrieve the data from the API. The function is called by the second function *process_data*. 
 
 function *retrieve_data*
@@ -163,3 +65,56 @@ needs the following arguments:
 
 The while-loop loops over every day and saves every day in a single netCDF file.
 
+
+## Part 3: Interpolate data to healpix grid
+In the next part of the exercise, the data should be converged into a healpix grid with two resolutions: NSIDE=8 and NSIDE=16. This process shall be done in the daily batch (DO NOT first download all data and then process all data).
+
+The routine should look as follows:
+For each day:
+download ERA5 day
+→ open NetCDF
+→ regrid to HEALPix NSIDE=8
+→ regrid to HEALPix NSIDE=16
+→ (later: write both to Zarr)
+→ move to next day
+
+
+The standard coordinates are the colatitude (theta),0 at the North Pole, pi/2 at the equator and pi at the South Pole and the longitude (Phi) between 0 and 2 pi eastward, in a Mollview projection,phi=0 is at the center and increases eastward toward the left of the map.
+
+
+
+
+
+
+- installed every dependency from this website for xarray: https://docs.xarray.dev/en/stable/getting-started-guide/installing.html
+
+### To Do next: 
+- interpolate data to a healpix grid etc.
+- write README consistently
+- test flexibility of code --> no hardcoding
+
+**30.12.2025**
+
+- created conda environment on macbook to be able to work there as well
+- flexible download routine
+
+- research healpix grid https://healpix.sourceforge.io/
+- installed healpy via pip
+- 
+
+
+
+
+
+
+
+02.01.2026
+
+- research for first part of homework
+found this https://dev.to/kiprotichterer/extracting-data-from-an-api-using-python-requests-4h5
+https://pyquesthub.com/data-extraction-from-apis-using-python-a-step-by-step-guide
+
+
+
+## References
+Hersbach, H., Bell, B., Berrisford, P., Biavati, G., Horányi, A., Muñoz Sabater, J., Nicolas, J., Peubey, C., Radu, R., Rozum, I., Schepers, D., Simmons, A., Soci, C., Dee, D., Thépaut, J-N. (2023): ERA5 hourly data on pressure levels from 1940 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS), DOI: 10.24381/cds.bd0915c6 (Accessed on 11 Jan. 2026)
