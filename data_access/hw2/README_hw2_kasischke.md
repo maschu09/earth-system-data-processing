@@ -14,7 +14,18 @@ The mock testing can be done whith executing the file `control_flow.py`.
 
 First of all, the following modules are imported: `argparse`, `random`, and the `datetime, timedelta, date` subclasses from the `datetime`class.
 
-The only thing that need to be defined in the first place is the start date of the project or the dowloading period, respectively. Then some mock functions are created to design a workflow. 
+The only thing that need to be defined in the first place is the start date (`date(2026, 1, 1)`) of the project or the dowloading period, respectively. Then some mock functions are created to design a workflow. The functions `download_data`, `process_data`, `archive_data` and `run_pipeline` are representative of a real download routine. 
+The function `main` executes the code above in the following way:
+1. The Argument Parser
+With the `main()`function, the script can be runned from the command line with a specific date. The specific date can be included as a string and the lambda function converts the input string automatically into a Python date object.
+
+There are two sencarios that need to be covered:
+1. Call script with date argument
+If a date argument is provided, the script just executes `run_pipeline()` for the specific day. 
+2. No data provided
+If no date is provided, the script is looking for missing data until today and runs the pipeline for every missing day. If the `run_pipeline()`function fails (randomly) for a day, the entire loop breaks. 
+
+At the end of the script, two datasets were already added to the ARCHIVE folder to simulate a real scenario, where the code needs to look for missing data files. 
 
 
 2. download ERA5 humidity data
