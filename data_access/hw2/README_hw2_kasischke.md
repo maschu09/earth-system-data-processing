@@ -83,6 +83,8 @@ The standard coordinates are the colatitude (theta),0 at the North Pole, pi/2 at
 
 
 
+## Part 4: Define suitable zarr-chunking strategy
+A suitable zarr strategy would be to define one day per chunk. Save all information for each date in a zarr chunk. 
 
 
 
