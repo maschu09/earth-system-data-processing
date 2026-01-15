@@ -74,8 +74,10 @@ __marimo__/
 
 data_access/Sentinel3_SurfaceAlbedo.nc
 
-# Ignore all NetCDF files across the repository
+# Ignore all NetCDF, GRIB and TXT files across the repository
 **/*.nc
+*.grib
+*.txt
 
 
 data_access/imerg_day/
