@@ -34,14 +34,14 @@ I thus create a single healpix map for every combination of pressure-level, time
 
 ## Saving in Zarr format
 
-The Healpix data are written to one Zarr store per day (`<date>.zarr`), with **one group per spatial resolution**:
+The Healpix data is written to one Zarr store per day (`<date>.zarr`), with **one group per spatial resolution**:
 
 * `nside=8`
 * `nside=16`
 
-Different NSIDE values correspond to different grids and are therefore kept separate. Each group can be loaded independently.
+Different NSIDE values correspond to different grids and is therefore kept separate. Each group can be loaded independently.
 
-Within each `nside` group, the data are stored as an `xarray.Dataset` with dimensions:
+Within each `nside` group, the data is stored as an `xarray.Dataset` with dimensions:
 
 * `time` (6-hourly time steps),
 * `level` (pressure levels),
@@ -51,7 +51,7 @@ The data variable (e.g. `q`) has shape `(time, level, pix)`.
 
 **Chunking strategy**
 
-Chunking is chosen to match typical access patterns:
+I chose the chunking strategy to match typical access patterns:
 
 * `time: 1` – enables efficient appending and time-based subsetting,
 * `level: 1` – allows loading individual pressure levels,
