@@ -1,0 +1,7 @@
+data_access/*.zip
+data_access/*.txt
+data_access/*.gz
+data_access/*.tar
+data_access/*.json
+__pycache__/
+*.log
