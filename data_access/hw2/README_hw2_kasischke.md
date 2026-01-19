@@ -101,19 +101,14 @@ Then the data is saved in Zarr format using the following strategy:
 
 
 #### HEALPix Coordinate Convention
-The standard coordinates are the colatitude (theta),0 at the North Pole, pi/2 at the equator and pi at the South Pole and the longitude (Phi) between 0 and 2 pi eastward, in a Mollview projection,phi=0 is at the center and increases eastward toward the left of the map. When visualized using a Mollweide projection (`hp.mollview`), phi = 0 is located at the center of the map and increases eastward toward the left.
+The standard coordinates are the colatitude (theta),0 at the North Pole, pi/2 at the equator and pi at the South Pole and the longitude (Phi) between 0 and 2 pi eastward, in a Mollview projection,phi=0 is at the center and increases eastward toward the left of the map. When visualized using a Mollview projection (`hp.mollview`), phi = 0 is located at the center of the map and increases eastward toward the left.
+
+## Comment on the plots
+The resolution of the regridded data is not sufficient. I think, I might have an issue with the coordinates and the HealPix grid. But the computation time for creating the plots is much faster than with the original netCDF files. 
 
 
-
-
-
-
-
-
-
-
-
-
+## Tools
+Claude AI was used for general troubleshooting.
 
 ## References
 Hersbach, H., Bell, B., Berrisford, P., Biavati, G., Horányi, A., Muñoz Sabater, J., Nicolas, J., Peubey, C., Radu, R., Rozum, I., Schepers, D., Simmons, A., Soci, C., Dee, D., Thépaut, J-N. (2023): ERA5 hourly data on pressure levels from 1940 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS), DOI: 10.24381/cds.bd0915c6 (Accessed on 11 Jan. 2026)

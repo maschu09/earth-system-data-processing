@@ -101,7 +101,7 @@ def retrieve_and_process(dataset, start, end, variable, time, pressure_level,
             ds_hp = xr.Dataset(data_vars)
             ds_hp.attrs['nside'] = nside
             
-            # Save to zarr with proper encoding
+            # Save to zarr 
             if os.path.exists(zarr_path):
                 # For appending, use append_dim and reconsolidate after
                 ds_hp.to_zarr(zarr_path, mode='a', append_dim='time')
