@@ -1,4 +1,4 @@
-## Earth System Data Processing
+\# Earth System Data Processing
 
 
 
@@ -46,19 +46,19 @@ October 2025
 
 
 
-##### Homework 2: Automated ERA5 Processing Chain
+\## Homework 2: Automated ERA5 Processing Chain
 
-**Author: Nagibe Maroun González**
+\*\*Author: Nagibe Maroun González\*\*
 
-**Course: Earth System Data Processing WiSE 25/26**
-
-
+\*\*Course: Earth System Data Processing WiSE 25/26\*\*
 
 
 
 
 
-##### Overview
+
+
+\### Overview
 
 The second homework consists of a processing chain that downloads, process and stores data form the ERA5 dataset. The DailyRoutineERA5.py uses mock testing strategy to see if the workflow is successful.
 
@@ -68,18 +68,21 @@ This repository implements a robust, automated processing chain designed to down
 
 
 
-##### Files
+\### Files
 
-* 'Homework\_2\_NagibeMG.ipynb': The main control notebook and visualization interface.
-* 'RealDailyRoutineERA5.py': Contains the core logic for downloading, regridding, and saving.
-* 'era5\_humidity.zarr': The output data store with the processed grids.
-* 'DailyRoutineERA5.py': Contains the mock functions.
+'Homework\_2\_NagibeMG.ipynb': The main control notebook and visualization interface.
+
+'RealDailyRoutineERA5.py': Contains the core logic for downloading, regridding, and saving.
+
+'era5\_humidity.zarr': The output data store with the processed grids.
+
+'DailyRoutineERA5.py': Contains the mock functions.
 
 
 
 
 
-##### Dataset
+\### Dataset
 
 ERA5-Land is a reanalysis dataset providing a consistent view of the evolution of land variables over several decades at an enhanced resolution compared to ERA5. ERA5-Land has been produced by replaying the land component of the ECMWF ERA5 climate reanalysis. Reanalysis combines model data with observations from across the world into a globally complete and consistent dataset using the laws of physics. Reanalysis produces data that goes several decades back in time, providing an accurate description of the climate of the past.
 
@@ -87,11 +90,11 @@ The chosen variable is relative humidity. However, the variable can be modified 
 
 
 
-##### Implementation Details
+\### Implementation Details
 
 
 
-1. Control Flow:
+1\. Control Flow:
 
 The workflow is managed by a control function that scans a user-defined date range. Before processing a day, the script checks for a marker file. If the marker is missing, it triggers the pipeline: Download → Regrid → Store. This ensures that if the process is interrupted it will resume exactly where it left off.
 
@@ -109,14 +112,17 @@ The workflow is managed by a control function that scans a user-defined date ran
 
 
 
-##### Challenges
+\### Challenges
 
-1. Main issue is the unavailability of HEALPix for Windows, which is the OS that I use. Had to use a virtual machine and do all the configurations needed to run the program. This detour was very time consuming. 
-2. Current python version was not compatible with some libraries (dask), so had to create new environment with older py version to be able to run it. This issue was detected with the help of AI. 
+Main issue is the unavailability of HEALPix for Windows, which is the OS that I use. Had to use a virtual machine and do all the configurations needed to run the program. This detour was very time consuming.
+
+Current python version was not compatible with some libraries (dask), so had to create new environment with older py version to be able to run it. This issue was detected with the help of AI.
 
 
 
-##### References
+\### References
 
 Copernicus Climate Change Service (C3S)(2019): ERA5-Land hourly data from 1950 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.e2161bac
+
+
 
