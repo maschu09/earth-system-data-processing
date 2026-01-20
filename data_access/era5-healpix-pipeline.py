@@ -3,9 +3,10 @@ from datetime import date, datetime, timedelta, timezone
 
 
 class ERA5HealpixPipeline:
-    def __init__(self, data_dir="./data/era5/healpix/", debug=False):
+    def __init__(self, data_dir="./data/era5/healpix/", redownload=False, debug=False):
         self.data_dir = data_dir
-        self.debug = debug          # if True, it will not download actual data
+        self.redownload = redownload    # if True, it will re-download existing data
+        self.debug = debug              # if True, it will not download actual data
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
 
@@ -23,7 +24,7 @@ class ERA5HealpixPipeline:
         already_downloaded_dates = self._get_already_downloaded_dates()
         current_date = start_date
         while current_date <= end_date:
-            if current_date in already_downloaded_dates:
+            if current_date in already_downloaded_dates and not self.redownload:
                 print(f"Data for {current_date} already downloaded. Skipping.")
                 current_date += timedelta(days=1)
                 continue
