@@ -2,7 +2,7 @@
 
 **Author:** Yeganeh Khabbazian  
 **Date:** January 2026
-
+**Tool:** Used GitHub Copilot
 ---
 
 ## Overview
@@ -69,6 +69,13 @@ Data is regridded from ERA5's regular lat-lon grid to HEALPix using linear inter
 
 ---
 
+## Zarr Storage Format
+
+Zarr stores N-dimensional arrays as a directory of small chunk files plus metadata. This makes it well-suited for time series pipelines because new timesteps can be appended without rewriting the whole dataset, and subsets of the data can be read efficiently. In this project, the main array is stored as `(time, pressure_level, npix)` and chunked by day so that each chunk contains one full daily field (4 timesteps/day). For the 5-day example, this results in an array of shape `(20, 5, 768)` for NSIDE=8 with a daily chunk shape of `(4, 5, 768)`. The store metadata (`zarr.json`) records the chunking and the codec pipeline used to store the data.
+Each .zarr directory represents one array store. Inside the store, the data/ directory contains the chunked array values, while time/ and pressure_level/ store the corresponding coordinate arrays. 
+Chunk files are organized by chunk indices. With daily chunking (4 timesteps per chunk), chunk index 0 contains the first day of data, chunk index 1 the second day, and so on. This layout allows new days to be appended efficiently without rewriting existing data.
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -81,9 +88,17 @@ Data is regridded from ERA5's regular lat-lon grid to HEALPix using linear inter
 
 1. Create and activate a virtual environment.
 2. Install dependencies from `requirements.txt`.
-3. (Optional) Configure the CDS API for real downloads.
+3. Configure the CDS API for real downloads.
 
-Detailed execution notes and examples live in the notebook markdown to avoid duplication.
+**CDS API setup** (for real mode only):
+1. Register free account: https://cds.climate.copernicus.eu
+2. Get API key from Profile 
+3. Create `~/.cdsapirc`:
+```
+url: https://cds.climate.copernicus.eu/api/v2
+key: YOUR_UID:YOUR_API_KEY
+```
+
 
 ### Quick Start: Mock Mode Test
 
@@ -138,12 +153,13 @@ data_access/
   ├── data/
   │   ├── mock/              # Test files (when MOCK_MODE=True)
   │   └── real/              # Real downloads (when MOCK_MODE=False)
-  ├── processed/             # Processed copies before archiving
+  ├── processed/             # Processed copies before archiving(temporary storing)
   │   ├── mock/
   │   └── real/
   ├── archive/               # Final files, organized by date
   │   ├── mock/YYYY/MM/
   │   └── real/YYYY/MM/
+  ├── results/               # Saved comparison plots
   └── (parent dir)
       └── zarr_data/         # HEALPix regridded data
           ├── mock/
@@ -163,11 +179,11 @@ The zarr stores contain:
 ---
 
 ## Testing & Validation
-I first ran the notebook for a single date (01.12.2024).  
+I first ran the notebook for a single date (02.12.2024).  
 Next, I ran the notebook for 01–03 December to confirm that previously downloaded dates are skipped.  
 Then I ran the notebook with no arguments and interrupted the download to confirm the pipeline detects download failures.  
 I also interrupted the notebook while it was writing Zarr to confirm a rerun attempts the Zarr write again.  
-For 01.12.2024, one day took about 25 minutes; I interrupted the internet for ~2 minutes, so the run would have been about 23 minutes without the interruption.  
+The process for 02.12.2024 took about 25 minutes; I interrupted the internet and checked what happens. It automatically reconnected and continued after 2 minutes. 
 
 
 ### File Validation
@@ -184,7 +200,7 @@ Early testing revealed a critical issue: mock placeholder files would prevent re
 
 **2. Completeness Checking**
 
-Simply checking if an archived file exists is insufficient; interrupted downloads leave partial data. I implemented `check_day_completeness()`, which verifies that all expected timesteps (e.g., 4 for 6-hourly data) exist in the zarr time coordinate before deciding to skip a date. This handles network interruptions gracefully: rerunning the pipeline automatically reprocesses incomplete days.
+Simply checking if an archived file exists is insufficient; interrupted downloads leave partial data. I implemented `check_day_completeness()`, which verifies that all expected timesteps (e.g. 4 for 6-hourly data) exist in the zarr time coordinate before deciding to skip a date. This handles network interruptions gracefully: rerunning the pipeline automatically reprocesses incomplete days.
 
 **3. Variable Name Fallback**
 
@@ -200,36 +216,53 @@ When a zarr store already exists, the pipeline verifies that incoming `pressure_
 
 **6. Plot Consistency**
 
-Comparison plots align the original ERA5 lat-lon data with the closest matching Zarr timestamp, so visual checks compare the same hour rather than neighboring timesteps.
+Comparison plots align the original ERA5 lat-lon data with the closest matching Zarr timestamp, so visual checks compare the same hour.
 
 **Colormaps**
 
-I use cmocean because it is designed for geophysical fields and preserves meaningful visual gradients across the full range of values. Some palettes are reasonably robust to color‑vision differences, but not all are fully colorblind‑safe, so for maximum accessibility cividis or viridis can be substituted.
+I use cmocean because it is designed for geophysical fields and preserves meaningful visual gradients across the full range of values. Some palettes are reasonably robust to color‑vision differences, but not all are fully colorblind‑safe, so for maximum accessibility cividis or viridis can be substituted(color-blind friendly).
 
-Example comparison plot (ERA5 lat‑lon vs HEALPix for 2024‑12‑02 00 UTC):
+Example comparison plots (saved under `data_access/results/`):
 
-![ERA5 vs HEALPix comparison](results/comparison_relative_humidity_real_2024-12-02_00UTC.png)
+![ERA5 vs HEALPix comparison](results/comparison_relative_humidity_real_2024-12-01_12UTC.png)
+
+![ERA5 vs HEALPix comparison](results/comparison_relative_humidity_real_2024-12-03_12UTC.png)
 
 **7. Chunking Strategy**
 
 Zarr arrays are stored as `(time, pressure_level, npix)` with time-based chunking so each chunk contains a full daily field. The current strategy is one day per chunk (4 timesteps/day), which matches the daily processing and completeness checks.
+In principle, the data could be chunked both in time and in space. Temporal chunking was chosen because the workflow is organized around daily processing, and day-level reruns and HEALPix use. I also looked into spatial chunking for HEALPix data, especially for the case where users might want to repeatedly analyze a limited geographic region such as Germany or Europe. As discussed in the HEALPix limited-area examples provided by DKRZ, efficient spatial chunking for HEALPix requires keeping larger, structured blocks of pixels rather than selecting only the pixels inside a geographic boundary. In practice, this means storing full chunks that may include data outside the region of interest. Since this project mainly works with global fields and day-level processing, I decided not to implement spatial chunking and instead rely on time-based chunking.
 
 Trade-offs and alternatives:
 - **Daily chunks (current)**: easy reprocessing of partial days; clean alignment with daily plots and checks.
 - **Multi-day or monthly chunks**: fewer chunk files and less metadata overhead; better for long-range analytics but less convenient for day-level reruns.
 - **Fixed timesteps per chunk**: decouples chunking from calendar boundaries and is more robust if the cadence changes in the future.
 
-For NSIDE=8 and NSIDE=16, spatial chunking is unnecessary; keeping full spatial fields contiguous is more practical for this workflow.
+
 
 Initially, I used 3-day chunks, but I switched to 1-day chunks because the workflow is organized around daily processing and it’s more convenient to access or reprocess a single day at a time.
+
+Chunk size also matters. With zstd compression in this project, the required 5-day example results in small Zarr stores (~300 KB for NSIDE = 8 and ~1 MB for NSIDE = 16), and individual daily chunks are on the order of a few tens of kilobytes. For longer time ranges or higher resolutions, chunk sizes would need to be reconsidered.
+
 ---
 
 ## Reflections on Scalability and Limitations
 
 Storage requirements scale linearly with the number of time steps, pressure levels, and HEALPix pixels. Using float32 data keeps storage manageable, but long time periods or higher spatial resolution would significantly increase disk usage.  
-Daily chunking aligns well with the daily processing workflow and simplifies reprocessing of incomplete days. For long time spans, larger chunks (e.g., monthly) could reduce metadata overhead at the cost of reduced day-level flexibility.  
+Daily chunking aligns well with the daily processing workflow and simplifies reprocessing of incomplete days. For long time spans, larger chunks (e.g. monthly) could reduce metadata overhead at the cost of reduced day level flexibility.  
 Processing time increases with the number of time steps, pressure levels, and especially with HEALPix resolution. Higher NSIDE values significantly increase interpolation cost, making resolution choice a key performance consideration.  
-The dominant runtime cost is the spatial interpolation from latitude–longitude grids to HEALPix. For a single day, interpolation takes significantly longer than data download or file I/O.  
+The dominant runtime cost is the spatial interpolation from lat lon grids to HEALPix. For a single day, interpolation takes significantly longer than data download as data download was 1 -2 minutes(not a good network) but the rest took around 20 minutes.  
+
+What fails first?
+- Interpolation becomes the bottleneck first as NSIDE and time span grow; `scipy.griddata` is approximately O(N × M) in practice and memory-heavy, recomputes triangulations each timestep, and does not reuse geometry across timesteps.  
+
+What becomes unusable?
+- The current daily chunking strategy becomes inefficient for multi-year ranges due to excessive metadata and file counts. Beyond O(10^3) days (a few years at 4 timesteps/day), coarser temporal chunking or chunk consolidation would be required to keep metadata overhead reasonable.  
+- Large Zarr stores with many small chunk files become slow to traverse and expensive for filesystem metadata; on shared HPC filesystems this can trigger inode pressure and slow directory operations.  
+
+What assumptions stop holding?
+- This workflow is not suitable beyond multi-year ranges without redesign of chunking and interpolation.  
+- The interpolation approach assumes per-timestep recomputation is acceptable. At higher NSIDE or longer time series, precomputed interpolation weights or dedicated spherical regridding libraries become necessary.  
 
 Limits to scaling include:  
 - **API rate limits** that restrict request throughput.  
@@ -237,12 +270,20 @@ Limits to scaling include:
 - **Local disk** space and filesystem overhead from many Zarr files.  
 
 Possible improvements:  
-- Interpolation performance could be improved by replacing repeated point-wise interpolation with vectorized or tree-based methods.  
-- Interpolation could also be parallelized across timesteps or pressure levels to reduce wall-clock time.  
-- Download time could be reduced by limited parallelization of daily requests, but it must respect API concurrency limits.  
-- The download can target geographic subsets for region-focused studies, reducing both storage and processing cost.  
-- Zarr stores create many small files; larger chunk sizes or compressed stores could improve I/O performance.
 
+-The dominant cost in the current workflow is the repeated spatial interpolation from latitude–longitude grids to HEALPix. Performance could be improved by precomputing interpolation weights and reusing them across timesteps, or by switching to dedicated spherical regridding libraries that are designed for repeated global transforms.
+
+-Interpolation could also be parallelized across timesteps or pressure levels, which would reduce required time for daily processing without changing the overall workflow structure.
+
+-For longer time spans, the current daily chunking strategy could be adjusted. Using coarser temporal chunks (for example monthly) or applying Zarr chunk consolidation would reduce metadata overhead and improve I/O performance at the cost of reduced day-level flexibility.
+
+-Download performance could be improved through limited parallelization of daily requests, as long as API rate limits and fair-use policies are respected.
+
+-If the analysis focuses on a specific geographic region rather than on global fields, the workflow could be adapted to download regional subsets of ERA5 data before interpolation. This would reduce download volume and interpolation cost. The resulting HEALPix data would still need to be handled carefully (for example via masking or partial grids), since HEALPix is primarily designed as a global representation.
+
+-For very large datasets, filesystem performance can become a limiting factor due to the large number of small Zarr files. Using larger chunk sizes, consolidated metadata, or object-storage–oriented backends would help mitigate this issue.
+
+-In this project chunks are stored using zstd compression with a fast default setting(level 0). For larger datasets or long-term storage, the compression level could be adjusted to further reduce disk usage, at the cost of slightly slower write performance.
 ---
 
 ## References
@@ -253,8 +294,8 @@ Possible improvements:
 
 3. ECMWF ERA5 Documentation. https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation
 
-4. Zarr Specification. https://zarr-specs.readthedocs.io/
+4. Zarr explanation. https://zarr-specs.readthedocs.io/en/latest/v3/core/index.html
 
 5. healpy Tutorial. https://healpy.readthedocs.io/en/latest/tutorial.html
-
+6. Limited-area HEALPix https://easy.gems.dkrz.de/Processing/healpix/limited_area_healpix.html
 ---
