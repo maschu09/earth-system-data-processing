@@ -34,10 +34,13 @@ The second homework consists of a processing chain that downloads, process and s
 This repository implements a robust, automated processing chain designed to download atmospheric data from the ERA5 dataset, perform spatial regridding, and archive the results in a Zarr format. The system is built to handle daily batches with a "catch-up" logic that automatically detects and processes missing days.
 
 ### Files
-'Homework_2_NagibeMG.ipynb': The main control notebook and visualization interface.
-'RealDailyRoutineERA5.py': Contains the core logic for downloading, regridding, and saving.
-'era5_humidity.zarr': The output data store with the processed grids.
-'DailyRoutineERA5.py': Contains the mock functions.
+- 'Homework_2_NagibeMG.ipynb': The main control notebook and visualization interface.
+
+- 'RealDailyRoutineERA5.py': Contains the core logic for downloading, regridding, and saving.
+
+- 'era5_humidity.zarr': The output data store with the processed grids.
+
+- 'DailyRoutineERA5.py': Contains the mock functions.
 
 
 ### Dataset
@@ -56,8 +59,9 @@ The workflow is managed by a control function that scans a user-defined date ran
 
 
 ### Challenges
-Main issue is the unavailability of HEALPix for Windows, which is the OS that I use. Had to use a virtual machine and do all the configurations needed to run the program. This detour was very time consuming.
-Current python version was not compatible with some libraries (dask), so had to create new environment with older py version to be able to run it. This issue was detected with the help of AI.
+* Main issue is the unavailability of HEALPix for Windows, which is the OS that I use. Had to use a virtual machine and do all the configurations needed to run the program. This detour was very time consuming.
+
+* Current python version was not compatible with some libraries (dask), so had to create new environment with older py version to be able to run it. This issue was detected with the help of AI.
 
 ### References
 Copernicus Climate Change Service (C3S)(2019): ERA5-Land hourly data from 1950 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.e2161bac
