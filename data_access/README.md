@@ -1,236 +1,260 @@
 # ERA5 Data Processing Pipeline
 
-A flexible, production-ready Python pipeline for downloading, processing, and archiving ERA5 climate data with date-based workflow control.
+**Author:** Yeganeh Khabbazian  
+**Date:** January 2026
 
-## Features
+---
 
-✅ **Flexible Configuration**: All user settings externalized in `config.py` - no hardcoding  
-✅ **Modular Design**: Separate modules for download, processing, and control flow  
-✅ **Smart Date Handling**: Automatically finds oldest missing file and continues processing  
-✅ **Single-Command Operation**: Trigger download → processing → archiving with one call  
-✅ **Multiple Invocation Modes**:
-- Process specific date: `python era5_pipeline.py 2024-12-01`
-- Process date range: `python era5_pipeline.py --start 2024-12-01 --end 2024-12-05`
-- Process all missing files: `python era5_pipeline.py` (default)
-- Find oldest missing: `python era5_pipeline.py --find-missing`
+## Overview
 
-✅ **Mock Processing**: Test workflow without downloading data: `python era5_pipeline.py --mock`  
-✅ **Comprehensive Logging**: All operations logged to `logs/` directory
+This project implements an automated pipeline to download ERA5 climate reanalysis data from the Copernicus Climate Data Store, regrid it to HEALPix equal-area spheres, and store it efficiently in zarr format for time-series analysis.
 
-## Architecture
+**What the pipeline does:**
+
+- **Downloads** daily ERA5 data (6-hourly timesteps) via the CDS API, with mock mode for testing
+- **Interpolates** every timestep from lat-lon to HEALPix (NSIDE=8 for 768 pixels, NSIDE=16 for 3,072 pixels)
+- **Appends immediately** to per-variable zarr stores as part of the daily processing chain
+- **Archives** processed files under `archive/YYYY/MM/` after successful processing
+- **Validates completeness** by checking zarr time entries before skipping a date
+
+**Key design choices:**
+
+- Mock and real files are kept separate (`data/mock/` vs `data/real/`) to avoid test/production interference
+- If the configured variable name isn’t present in a file, the pipeline falls back to the first data variable it finds (for ERA5 this can be the short name `r`).
+- Surface variables (no pressure-level dimension) are treated as a single implicit level
+- All timestamps are normalized to UTC with `datetime64[ns]` precision
+- The zarr base directory is resolved from the git project root (avoiding per-CWD duplicates) and lives at `zarr_data/` one level above `data_access/`
+- Daily chunking aligns with the daily processing and completeness-checking workflow
+
+---
+
+## Dataset Information: ERA5
+
+**ERA5** (ECMWF Reanalysis v5) is the state-of-the-art global climate reanalysis from the European Centre for Medium-Range Weather Forecasts. It blends observations (satellites, weather stations, aircraft) with model data via advanced data assimilation.
+
+| Property | Details |
+|---|---|
+| **Spatial resolution** | ~31 km on regular latitude-longitude grid |
+| **Temporal resolution** | Hourly; this pipeline uses 6-hourly (4 times per day) |
+| **Variables** | 200+ including temperature, humidity, wind, pressure |
+| **Pressure levels** | 37 levels from surface to stratosphere |
+| **Coverage** | Global (0–360° longitude, −90–90° latitude) |
+| **Data latency** | ~3 months behind real-time |
+
+**Sources:**
+- ECMWF ERA5: https://www.ecmwf.int/en/research/climate-reanalysis/era5
+- CDS: https://cds.climate.copernicus.eu
+- Hersbach et al. (2020): https://doi.org/10.1002/qj.3803
+
+## Understanding HEALPix Grids
+
+### What is HEALPix?
+
+**HEALPix** is a genuinely curvilinear partition of the sphere into exactly equal-area quadrilaterals of varying shape. The base-resolution comprises twelve pixels in three rings around the poles and equator. The resolution of the grid is expressed by the parameter NSIDE, which defines the number of divisions along the side of a base-resolution pixel needed to reach a desired high-resolution partition. All pixel centers are placed on 4 × NSIDE − 1 rings of constant latitude and are equidistant in azimuth (on each ring).
+
+*Source: Gorski et al. (2005), https://arxiv.org/pdf/astro-ph/9905275*
+
+### Used Two Resolutions
+
+The pipeline outputs NSIDE=8 and NSIDE=16:
+
+| Resolution | NSIDE | Pixels | Area per Pixel |
+|---|---|---|---|
+| **Coarse** | 8 | 768 | ~827 km² |
+| **Fine** | 16 | 3,072 | ~207 km² |
+
+### Interpolation Method
+
+Data is regridded from ERA5's regular lat-lon grid to HEALPix using linear interpolation via `scipy.griddata()`. To prevent artifacts at the 0°/360° dateline, where lon=359° and lon=1° are physically adjacent, I duplicate source points with lon±360° shifts. This allows the interpolator to correctly find neighbors across the dateline, eliminating seams in the HEALPix output.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Python 3.10+**
+- **Virtual environment** (venv recommended)
+- **CDS API key** (only for real downloads)
+
+### Installation
+
+1. Create and activate a virtual environment.
+2. Install dependencies from `requirements.txt`.
+3. (Optional) Configure the CDS API for real downloads.
+
+Detailed execution notes and examples live in the notebook markdown to avoid duplication.
+
+### Quick Start: Mock Mode Test
+
+No API setup required:
+
+```bash
+cd data_access
+jupyter notebook era5_workflow.ipynb
+```
+
+In the notebook:
+- Cell 3 has `MOCK_MODE = True` by default
+- Run all cells 
+- Pipeline completes in ~5 seconds with synthetic data
+- Check results in `data/mock/`, `processed/mock/`, `archive/`, and `../zarr_data/`
+
+---
+
+## Notebook Usage
+
+The notebook is configured entirely in **Cell 3** (User Parameters):
+
+```python
+MOCK_MODE = True                    # True = test, False = real CDS API
+ERA5_CONFIG = {
+    'variable': 'relative_humidity',
+    'pressure_levels': [975, 900, 800, 500, 300],
+    'times': ['00:00', '06:00', '12:00', '18:00'],
+    'format': 'netcdf',
+    'grid': None,                   # None = global; [N, W, S, E] = region
+}
+single_date = None                  # Set to process one date
+start_date = None                   # Set for date range start
+end_date = None                     # Set for date range end
+```
+
+**Invocation modes (automatic):**
+
+| Configuration | Behavior |
+|---|---|
+| All `None` (default) | Runs the fixed default range (2024-12-01 to 2024-12-05), as required by the assignment |
+| `single_date` set | Processes exactly one date |
+| `start_date` & `end_date` set | Processes entire date range |
+
+
+---
+
+## Output Structure
 
 ```
 data_access/
-├── config.py              # User-configurable settings (variables, levels, format, dates)
-├── download.py            # ERA5 CDS API download routine (flexible, parameterized)
-├── processing.py          # Data processing and archiving
-├── era5_pipeline.py       # Main control flow script
-├── test_mock_pipeline.py  # Test suite for mock processing
-├── logs/                  # Log files
-├── data/era5/             # Downloaded raw files
-├── processed/era5/        # Processed files
-└── archive/era5/          # Archived processed files
+  ├── data/
+  │   ├── mock/              # Test files (when MOCK_MODE=True)
+  │   └── real/              # Real downloads (when MOCK_MODE=False)
+  ├── processed/             # Processed copies before archiving
+  │   ├── mock/
+  │   └── real/
+  ├── archive/               # Final files, organized by date
+  │   ├── mock/YYYY/MM/
+  │   └── real/YYYY/MM/
+  └── (parent dir)
+      └── zarr_data/         # HEALPix regridded data
+          ├── mock/
+          │   ├── relative_humidity_nside8.zarr
+          │   └── relative_humidity_nside16.zarr
+          └── real/
+              ├── relative_humidity_nside8.zarr
+              └── relative_humidity_nside16.zarr
 ```
 
-## Configuration
+The zarr stores contain:
+- **data**: (time, pressure_level, healpix_pixel) array
+- **time**: Timestamps as datetime64[ns]
+- **pressure_level**: Pressure levels in hPa
+- **attrs**: Metadata (nside, variable, pixel count)
 
-Edit [data_access/config.py](data_access/config.py) to customize:
+---
 
-```python
-ERA5_CONFIG = {
-    "variable": "relative_humidity",      # CDS variable name
-    "pressure_levels": [975, 900, 800, 500, 300],  # hPa
-    "times": ["00:00", "06:00", "12:00", "18:00"],  # 6-hourly
-    "format": "netcdf",                   # or 'grib'
-    "grid": None,                         # None = original lat-lon resolution
-}
+## Testing & Validation
+I first ran the notebook for a single date (01.12.2024).  
+Next, I ran the notebook for 01–03 December to confirm that previously downloaded dates are skipped.  
+Then I ran the notebook with no arguments and interrupted the download to confirm the pipeline detects download failures.  
+I also interrupted the notebook while it was writing Zarr to confirm a rerun attempts the Zarr write again.  
+For 01.12.2024, one day took about 25 minutes; I interrupted the internet for ~2 minutes, so the run would have been about 23 minutes without the interruption.  
 
-DEFAULT_START_DATE = datetime(2024, 12, 1)
-DEFAULT_END_DATE = datetime(2024, 12, 5)
-```
 
-## Download Routine
+### File Validation
 
-The `download_era5_daily()` function is fully flexible and parameterized:
+Before reusing an existing downloaded file, the pipeline validates that it can be opened and contains expected coordinates (latitude/longitude). Invalid files are deleted and automatically re-downloaded on the next run.
 
-```python
-from download import download_era5_daily
+---
 
-# Use defaults from config
-download_era5_daily(date=datetime(2024, 12, 1))
+## Design Decisions & Robustness
 
-# Or override with custom parameters
-download_era5_daily(
-    date=datetime(2024, 12, 1),
-    variable="temperature",
-    pressure_levels=[850, 700, 500],
-    times=["00:00", "12:00"],  # 12-hourly
-    output_format="grib",
-    grid=[1.0, 1.0]  # 1°×1° resolution
-)
-```
+**1. Mock vs Real Separation**
 
-No user settings are hardcoded within the download routine itself.
+Early testing revealed a critical issue: mock placeholder files would prevent real downloads when switching modes. I solved this by storing mock and real files in separate directories (`data/mock/` vs `data/real/`). This allows seamless testing and switching without manual file cleanup.
 
-## Usage Examples
+**2. Completeness Checking**
 
-### 1. Process a Specific Date (with actual download)
-```bash
-python era5_pipeline.py 2024-12-01
-```
+Simply checking if an archived file exists is insufficient; interrupted downloads leave partial data. I implemented `check_day_completeness()`, which verifies that all expected timesteps (e.g., 4 for 6-hourly data) exist in the zarr time coordinate before deciding to skip a date. This handles network interruptions gracefully: rerunning the pipeline automatically reprocesses incomplete days.
 
-### 2. Process Date Range (with actual download)
-```bash
-python era5_pipeline.py --start 2024-12-01 --end 2024-12-05
-```
+**3. Variable Name Fallback**
 
-### 3. Find and Process All Missing Files (with actual download)
-```bash
-python era5_pipeline.py
-```
+ERA5 uses short variable names (e.g., `r` for relative humidity) that don't always match the long names in `ERA5_CONFIG`. I added automatic detection: if the configured name is not found, the pipeline uses the first data variable with lat/lon dimensions. 
 
-### 4. Test Mock Processing (no download)
-```bash
-python era5_pipeline.py --mock
-```
+**4. Timestamp Precision**
 
-### 5. Run Full Test Suite
-```bash
-python test_mock_pipeline.py
-```
+Zarr time comparisons failed silently when numpy timestamps had different precisions. I now normalize all timestamps to `datetime64[ns]` before storage and comparison, ensuring reliable matching across runs.
 
-## Workflow Steps
+**5. Pressure Level Integrity**
 
-For each date processed:
+When a zarr store already exists, the pipeline verifies that incoming `pressure_levels` match the stored `pressure_level` metadata. If they differ, the write is rejected to prevent mixing incompatible datasets.
 
-1. **Download**: Fetch ERA5 data from CDS API (6-hourly intervals on specified pressure levels)
-2. **Process**: Apply any data processing/transformations (placeholder for custom logic)
-3. **Archive**: Move processed files to timestamped archive directory structure
+**6. Plot Consistency**
 
-All three steps occur with a single command. If a file already exists, it's skipped.
+Comparison plots align the original ERA5 lat-lon data with the closest matching Zarr timestamp, so visual checks compare the same hour rather than neighboring timesteps.
 
-## Logging
+**Colormaps**
 
-All pipeline operations are logged to:
-- **Pipeline log**: `logs/pipeline.log`
-- **Download log**: `logs/download.log`
-- **Processing log**: `logs/processing.log`
+I use cmocean because it is designed for geophysical fields and preserves meaningful visual gradients across the full range of values. Some palettes are reasonably robust to color‑vision differences, but not all are fully colorblind‑safe, so for maximum accessibility cividis or viridis can be substituted.
 
-View logs with:
-```bash
-tail -f logs/pipeline.log
-```
+Example comparison plot (ERA5 lat‑lon vs HEALPix for 2024‑12‑02 00 UTC):
 
-## File Organization
+![ERA5 vs HEALPix comparison](results/comparison_relative_humidity_real_2024-12-02_00UTC.png)
 
-Downloaded and processed files are organized by date:
+**7. Chunking Strategy**
 
-```
-data/era5/
-├── era5_relative_humidity_20241201.nc
-├── era5_relative_humidity_20241202.nc
-└── ...
+Zarr arrays are stored as `(time, pressure_level, npix)` with time-based chunking so each chunk contains a full daily field. The current strategy is one day per chunk (4 timesteps/day), which matches the daily processing and completeness checks.
 
-archive/era5/
-├── 2024/12/
-│   ├── processed_era5_relative_humidity_20241201.nc
-│   ├── processed_era5_relative_humidity_20241202.nc
-│   └── ...
-└── ...
-```
+Trade-offs and alternatives:
+- **Daily chunks (current)**: easy reprocessing of partial days; clean alignment with daily plots and checks.
+- **Multi-day or monthly chunks**: fewer chunk files and less metadata overhead; better for long-range analytics but less convenient for day-level reruns.
+- **Fixed timesteps per chunk**: decouples chunking from calendar boundaries and is more robust if the cadence changes in the future.
 
-## Error Handling
+For NSIDE=8 and NSIDE=16, spatial chunking is unnecessary; keeping full spatial fields contiguous is more practical for this workflow.
 
-- **Missing files**: Pipeline automatically finds oldest missing file and continues
-- **API failures**: Detailed error logging; pipeline skips failed dates and continues
-- **Processing errors**: Logged with full traceback; pipeline continues to next date
+Initially, I used 3-day chunks, but I switched to 1-day chunks because the workflow is organized around daily processing and it’s more convenient to access or reprocess a single day at a time.
+---
 
-## Extending the Pipeline
+## Reflections on Scalability and Limitations
 
-### Add New Variables
-Update `config.py`:
-```python
-ERA5_CONFIG = {
-    "variable": "temperature",  # or "geopotential", "wind_speed", etc.
-    ...
-}
-```
+Storage requirements scale linearly with the number of time steps, pressure levels, and HEALPix pixels. Using float32 data keeps storage manageable, but long time periods or higher spatial resolution would significantly increase disk usage.  
+Daily chunking aligns well with the daily processing workflow and simplifies reprocessing of incomplete days. For long time spans, larger chunks (e.g., monthly) could reduce metadata overhead at the cost of reduced day-level flexibility.  
+Processing time increases with the number of time steps, pressure levels, and especially with HEALPix resolution. Higher NSIDE values significantly increase interpolation cost, making resolution choice a key performance consideration.  
+The dominant runtime cost is the spatial interpolation from latitude–longitude grids to HEALPix. For a single day, interpolation takes significantly longer than data download or file I/O.  
 
-### Change Pressure Levels
-```python
-ERA5_CONFIG = {
-    "pressure_levels": [1000, 950, 850, 700, 500, 300, 200, 100],
-    ...
-}
-```
+Limits to scaling include:  
+- **API rate limits** that restrict request throughput.  
+- **Network bandwidth** that bounds how fast daily files can be fetched.  
+- **Local disk** space and filesystem overhead from many Zarr files.  
 
-### Change Output Format
-```python
-ERA5_CONFIG = {
-    "format": "grib",  # switch from netcdf
-    ...
-}
-```
+Possible improvements:  
+- Interpolation performance could be improved by replacing repeated point-wise interpolation with vectorized or tree-based methods.  
+- Interpolation could also be parallelized across timesteps or pressure levels to reduce wall-clock time.  
+- Download time could be reduced by limited parallelization of daily requests, but it must respect API concurrency limits.  
+- The download can target geographic subsets for region-focused studies, reducing both storage and processing cost.  
+- Zarr stores create many small files; larger chunk sizes or compressed stores could improve I/O performance.
 
-### Customize Processing Logic
-Edit `processing.py` `process_daily_data()` function to add:
-- Regridding
-- Unit conversions
-- Quality checks
-- Data merging
+---
 
-## Testing
+## References
 
-Mock processing tests the complete workflow without downloading data:
+1. Hersbach, H., Bell, B., Berrisfield, P., et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803
 
-```bash
-python test_mock_pipeline.py
-```
+2. Gorski, K. M., Hivon, E., Banday, A. J., et al. (2005). HEALPix: A framework for high-resolution discretization and fast analysis of data distributed on the sphere. *The Astrophysical Journal*, 622(2), 759–771. https://doi.org/10.1086/427976
 
-Output:
-```
-======================================================================
-ERA5 PIPELINE - MOCK PROCESSING TESTS
-======================================================================
+3. ECMWF ERA5 Documentation. https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation
 
-TEST: Single date processing (2024-12-01) with mock
-...
-Result: ✓ PASSED
+4. Zarr Specification. https://zarr-specs.readthedocs.io/
 
-TEST: Date range processing (2024-12-01 to 2024-12-03) with mock
-...
-Result: ✓ PASSED
+5. healpy Tutorial. https://healpy.readthedocs.io/en/latest/tutorial.html
 
-TEST SUMMARY
-======================================================================
-Total tests: 4
-Passed: 4
-Failed: 0
-======================================================================
-```
-
-## Requirements
-
-```
-cdsapi
-```
-
-Install with:
-```bash
-pip install -r requirements.txt
-```
-
-## CDS API Setup
-
-Before downloading, configure CDS credentials:
-
-1. Register at [CDS portal](https://cds.climate.copernicus.eu/)
-2. Create `.cdsapirc` file in home directory:
-   ```
-   url: https://cds.climate.copernicus.eu/api/v2
-   key: YOUR_KEY_HERE
-   ```
-
-## License
-
-See LICENSE file in project root.
+---

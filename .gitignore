@@ -215,3 +215,9 @@ data_access/data/
 data_access/processed/
 data_access/archive/
 data_access/logs/
+
+# Zarr stores and results (large data - do NOT commit)
+zarr_data/
+zarr_data/*
+data_access/results/
+data_access/results/*
