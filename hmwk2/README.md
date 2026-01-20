@@ -20,11 +20,11 @@ metadata standards, FAIR data.
 
 The course uses an inverse classroom concept, where the actual lectures are recorded, while students
 
-discuss the lecture content and work on practical examples during the course hours. The material 
+discuss the lecture content and work on practical examples during the course hours. The material
 
-in this repository forms the basis for the practical exercises. Students will also be assigned 
+in this repository forms the basis for the practical exercises. Students will also be assigned
 
-coding tasks as homework and the best results have been included here to establish a collection of useful routines 
+coding tasks as homework and the best results have been included here to establish a collection of useful routines
 
 for other students and scientists who wish to learn the basics of Earth system data processing.
 
@@ -50,30 +50,32 @@ October 2025
 
 **Author: Nagibe Maroun González**
 
+**Course: Earth System Data Processing WiSE 25/26**
 
 
-The second homework consists of a processing chain that downloads, process and stores data form the ERA5 dataset. The DailyRoutineERA5.py uses mock testing strategy to see if the workflow is successful.
+
+
 
 
 
 ##### Overview
 
-This repository contains a processing chain for downloading ERA5 humidity data, regridding it to HEALPix, and saving it to a Zarr store. The workflow is designed to handle daily batches and recover from failures.
+The second homework consists of a processing chain that downloads, process and stores data form the ERA5 dataset. The DailyRoutineERA5.py uses mock testing strategy to see if the workflow is successful.
+
+
+
+This repository implements a robust, automated processing chain designed to download atmospheric data from the ERA5 dataset, perform spatial regridding, and archive the results in a Zarr format. The system is built to handle daily batches with a "catch-up" logic that automatically detects and processes missing days.
 
 
 
 ##### Files
 
-* 'Homework\_2\_NagibeMG.ipynb': The main control notebook.
+* 'Homework\_2\_NagibeMG.ipynb': The main control notebook and visualization interface.
 * 'RealDailyRoutineERA5.py': Contains the core logic for downloading, regridding, and saving.
-* 'era5\_humidity.zarr': The output data store.
+* 'era5\_humidity.zarr': The output data store with the processed grids.
 * 'DailyRoutineERA5.py': Contains the mock functions.
 
 
-
-##### How to Run
-
-Go to the jupyter notebook and run the cells in the order they are. 
 
 
 
@@ -85,19 +87,32 @@ The chosen variable is relative humidity. However, the variable can be modified 
 
 
 
-##### Data processing 
+##### Implementation Details
 
-The processing chain includes a spatial transformation step to convert the ERA5 data from its native format to a HEALPix (Hierarchical Equal Area isoLatitude Pixelization) grid. 
 
-* Original Data Structure: The raw ERA5 data is retrieved on a regular Latitude-Longitude grid (Plate Carrée projection). In this format, the data is stored as a 2D matrix (latitude x longitude), where the physical area of each grid cell decreases significantly towards the poles due to meridian convergence.
-* Target Grid: The data is interpolated onto a HEALPix grid with two distinct resolutions: NSIDE 8 (coarse) and NSIDE 16 (finer). Unlike the lat-lon grid, HEALPix divides the sphere into pixels of equal surface area, which is critical for unbiased global statistical analysis. The resulting data structure flattens the 2D spatial dimensions into a single 1D dimension (healpix\_pixel).
-* Interpolation Method: The transformation is performed using linear interpolation. This method calculates the value for each HEALPix pixel center by taking the weighted average of the four nearest neighbors from the original ERA5 source grid, ensuring a smooth transition of values between the two coordinate systems.
+
+1. Control Flow:
+
+The workflow is managed by a control function that scans a user-defined date range. Before processing a day, the script checks for a marker file. If the marker is missing, it triggers the pipeline: Download → Regrid → Store. This ensures that if the process is interrupted it will resume exactly where it left off.
+
+2\. Dataset \& Variable Selection: The routine is fully flexible in terms of the data parameters. All user settings (dates, variables, levels, and hours) are passed as arguments from the notebook.
+
+3\. Spatial Regridding: The processing chain converts the raw ERA5 Latitude-Longitude grid into a HEALPix (Hierarchical Equal Area isoLatitude Pixelization) grid (remapped to NSIDE 8 and NSIDE 16) using linear interpolation.
+
+4\. Storage Strategy: Data is archived in a Zarr store using a group-based hierarchy and chunked by the time dimension (1 day per chunk) to optimize for time-series analysis.
+
+5\. Visualization: It loads two arbitrary time samples and displays them. To ensure scientific comparability, all plots use a fixed color scale (0% to 100% Relative Humidity) and consistent colormaps (blue scale).
+
+
+
+
 
 
 
 ##### Challenges
 
-1. Main issue is the unavailability of HEALPix for Windows, which is the OS that I use. 
+1. Main issue is the unavailability of HEALPix for Windows, which is the OS that I use. Had to use a virtual machine and do all the configurations needed to run the program. This detour was very time consuming. 
+2. Current python version was not compatible with some libraries (dask), so had to create new environment with older py version to be able to run it. This issue was detected with the help of AI. 
 
 
 

@@ -1,0 +1,462 @@
+{
+    "metadata": {
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "NSIDE_16/.zattrs": {
+            "Conventions": "CF-1.7",
+            "GRIB_centre": "ecmf",
+            "GRIB_centreDescription": "European Centre for Medium-Range Weather Forecasts",
+            "GRIB_subCentre": 0,
+            "history": "2026-01-20T15:40 GRIB to CDM+CF via cfgrib-0.9.15.1/ecCodes-2.42.0 with {\"source\": \"tmpc6z1n_cp/data.grib\", \"filter_by_keys\": {\"stream\": [\"oper\"], \"stepType\": [\"instant\"]}, \"encode_cf\": [\"parameter\", \"time\", \"geography\", \"vertical\"]}",
+            "institution": "European Centre for Medium-Range Weather Forecasts"
+        },
+        "NSIDE_16/.zgroup": {
+            "zarr_format": 2
+        },
+        "NSIDE_16/expver/.zarray": {
+            "chunks": [
+                1
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dimension_separator": ".",
+            "dtype": "<U4",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_16/expver/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "time"
+            ]
+        },
+        "NSIDE_16/latitude/.zarray": {
+            "chunks": [
+                3072
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3072
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_16/latitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "healpix_pixel"
+            ]
+        },
+        "NSIDE_16/longitude/.zarray": {
+            "chunks": [
+                3072
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3072
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_16/longitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "healpix_pixel"
+            ]
+        },
+        "NSIDE_16/number/.zarray": {
+            "chunks": [],
+            "compressor": null,
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [],
+            "zarr_format": 2
+        },
+        "NSIDE_16/number/.zattrs": {
+            "_ARRAY_DIMENSIONS": [],
+            "long_name": "ensemble member numerical id",
+            "standard_name": "realization",
+            "units": "1"
+        },
+        "NSIDE_16/pressure_level/.zarray": {
+            "chunks": [
+                5
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                5
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_16/pressure_level/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "pressure_level"
+            ],
+            "long_name": "pressure",
+            "positive": "down",
+            "standard_name": "air_pressure",
+            "stored_direction": "decreasing",
+            "units": "hPa"
+        },
+        "NSIDE_16/r/.zarray": {
+            "chunks": [
+                1,
+                5,
+                3072
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dimension_separator": ".",
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20,
+                5,
+                3072
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_16/r/.zattrs": {
+            "GRIB_NV": 0,
+            "GRIB_Nx": 1440,
+            "GRIB_Ny": 721,
+            "GRIB_cfName": "relative_humidity",
+            "GRIB_cfVarName": "r",
+            "GRIB_dataType": "an",
+            "GRIB_gridDefinitionDescription": "Latitude/Longitude Grid",
+            "GRIB_gridType": "regular_ll",
+            "GRIB_iDirectionIncrementInDegrees": 0.25,
+            "GRIB_iScansNegatively": 0,
+            "GRIB_jDirectionIncrementInDegrees": 0.25,
+            "GRIB_jPointsAreConsecutive": 0,
+            "GRIB_jScansPositively": 0,
+            "GRIB_latitudeOfFirstGridPointInDegrees": 90.0,
+            "GRIB_latitudeOfLastGridPointInDegrees": -90.0,
+            "GRIB_longitudeOfFirstGridPointInDegrees": 0.0,
+            "GRIB_longitudeOfLastGridPointInDegrees": 359.75,
+            "GRIB_missingValue": 3.4028234663852886e+38,
+            "GRIB_name": "Relative humidity",
+            "GRIB_numberOfPoints": 1038240,
+            "GRIB_paramId": 157,
+            "GRIB_shortName": "r",
+            "GRIB_stepType": "instant",
+            "GRIB_stepUnits": 1,
+            "GRIB_totalNumber": 0,
+            "GRIB_typeOfLevel": "isobaricInhPa",
+            "GRIB_units": "%",
+            "GRIB_uvRelativeToGrid": 0,
+            "_ARRAY_DIMENSIONS": [
+                "time",
+                "pressure_level",
+                "healpix_pixel"
+            ],
+            "coordinates": "expver latitude longitude number",
+            "long_name": "Relative humidity",
+            "standard_name": "relative_humidity",
+            "units": "%"
+        },
+        "NSIDE_16/time/.zarray": {
+            "chunks": [
+                4
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dimension_separator": ".",
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_16/time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "time"
+            ],
+            "calendar": "proleptic_gregorian",
+            "long_name": "time",
+            "standard_name": "time",
+            "units": "seconds since 1970-01-01"
+        },
+        "NSIDE_8/.zattrs": {
+            "Conventions": "CF-1.7",
+            "GRIB_centre": "ecmf",
+            "GRIB_centreDescription": "European Centre for Medium-Range Weather Forecasts",
+            "GRIB_subCentre": 0,
+            "history": "2026-01-20T15:40 GRIB to CDM+CF via cfgrib-0.9.15.1/ecCodes-2.42.0 with {\"source\": \"tmpc6z1n_cp/data.grib\", \"filter_by_keys\": {\"stream\": [\"oper\"], \"stepType\": [\"instant\"]}, \"encode_cf\": [\"parameter\", \"time\", \"geography\", \"vertical\"]}",
+            "institution": "European Centre for Medium-Range Weather Forecasts"
+        },
+        "NSIDE_8/.zgroup": {
+            "zarr_format": 2
+        },
+        "NSIDE_8/expver/.zarray": {
+            "chunks": [
+                1
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dimension_separator": ".",
+            "dtype": "<U4",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_8/expver/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "time"
+            ]
+        },
+        "NSIDE_8/latitude/.zarray": {
+            "chunks": [
+                768
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                768
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_8/latitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "healpix_pixel"
+            ]
+        },
+        "NSIDE_8/longitude/.zarray": {
+            "chunks": [
+                768
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                768
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_8/longitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "healpix_pixel"
+            ]
+        },
+        "NSIDE_8/number/.zarray": {
+            "chunks": [],
+            "compressor": null,
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [],
+            "zarr_format": 2
+        },
+        "NSIDE_8/number/.zattrs": {
+            "_ARRAY_DIMENSIONS": [],
+            "long_name": "ensemble member numerical id",
+            "standard_name": "realization",
+            "units": "1"
+        },
+        "NSIDE_8/pressure_level/.zarray": {
+            "chunks": [
+                5
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                5
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_8/pressure_level/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "pressure_level"
+            ],
+            "long_name": "pressure",
+            "positive": "down",
+            "standard_name": "air_pressure",
+            "stored_direction": "decreasing",
+            "units": "hPa"
+        },
+        "NSIDE_8/r/.zarray": {
+            "chunks": [
+                1,
+                5,
+                768
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dimension_separator": ".",
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20,
+                5,
+                768
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_8/r/.zattrs": {
+            "GRIB_NV": 0,
+            "GRIB_Nx": 1440,
+            "GRIB_Ny": 721,
+            "GRIB_cfName": "relative_humidity",
+            "GRIB_cfVarName": "r",
+            "GRIB_dataType": "an",
+            "GRIB_gridDefinitionDescription": "Latitude/Longitude Grid",
+            "GRIB_gridType": "regular_ll",
+            "GRIB_iDirectionIncrementInDegrees": 0.25,
+            "GRIB_iScansNegatively": 0,
+            "GRIB_jDirectionIncrementInDegrees": 0.25,
+            "GRIB_jPointsAreConsecutive": 0,
+            "GRIB_jScansPositively": 0,
+            "GRIB_latitudeOfFirstGridPointInDegrees": 90.0,
+            "GRIB_latitudeOfLastGridPointInDegrees": -90.0,
+            "GRIB_longitudeOfFirstGridPointInDegrees": 0.0,
+            "GRIB_longitudeOfLastGridPointInDegrees": 359.75,
+            "GRIB_missingValue": 3.4028234663852886e+38,
+            "GRIB_name": "Relative humidity",
+            "GRIB_numberOfPoints": 1038240,
+            "GRIB_paramId": 157,
+            "GRIB_shortName": "r",
+            "GRIB_stepType": "instant",
+            "GRIB_stepUnits": 1,
+            "GRIB_totalNumber": 0,
+            "GRIB_typeOfLevel": "isobaricInhPa",
+            "GRIB_units": "%",
+            "GRIB_uvRelativeToGrid": 0,
+            "_ARRAY_DIMENSIONS": [
+                "time",
+                "pressure_level",
+                "healpix_pixel"
+            ],
+            "coordinates": "expver latitude longitude number",
+            "long_name": "Relative humidity",
+            "standard_name": "relative_humidity",
+            "units": "%"
+        },
+        "NSIDE_8/time/.zarray": {
+            "chunks": [
+                4
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dimension_separator": ".",
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20
+            ],
+            "zarr_format": 2
+        },
+        "NSIDE_8/time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "time"
+            ],
+            "calendar": "proleptic_gregorian",
+            "long_name": "time",
+            "standard_name": "time",
+            "units": "seconds since 1970-01-01"
+        }
+    },
+    "zarr_consolidated_format": 1
+}
