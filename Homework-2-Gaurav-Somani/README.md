@@ -255,9 +255,63 @@ All figures are saved to the `plots/` directory.
 
 ### 11. How to Run the Pipeline
 
-From the `src` directory, run the full workflow:
+This section describes how to run the full ERA5 → HEALPix → Zarr processing pipeline and how to generate plots.
+
+All commands are executed from the project root directory.
+
+#### 11.1 Running the Full Pipeline (`main.py`)
+
+The main entry point of the workflow is `main.py`.  
+It performs the following steps **for each day** in the configured date range:
+
+1. Downloads ERA5 pressure-level data (if not already present)
+2. Extracts specific humidity at 800 hPa
+3. Converts the data to HEALPix grids (NSIDE = 8 and 16)
+4. Stores the processed output in Zarr format (daily append)
+
+To run the pipeline for the date range defined in `config.py`:
 
 ```bash
+cd Homework-2-Gaurav-Somani/src
 python main.py
+```
+#### 11.2 Running the Pipeline for a Single Day
 
+The pipeline can also be executed for a single date by passing a date argument:
+```bash
+python main.py 2024-12-01
+```
+
+#### 11.3 Plotting ERA5 and HEALPix Data (`plot.py`)
+
+The `plot.py` script generates visualizations for a given date. It produces the following figures:
+
+- A latitude–longitude plot of ERA5 specific humidity at **800 hPa**
+- HEALPix scatter plots for:
+  - **NSIDE = 8**
+  - **NSIDE = 16**
+
+Plots are generated using ERA5 NetCDF data and **on-the-fly HEALPix conversion**, without reading from the Zarr store.
+
+To create plots for a specific date, run:
+
+```bash
+python plot.py 2024-12-01
+```
+#### 11.4 Plotting from Zarr (`plot-with-zarr.py`)
+
+An additional plotting script, `plot-with-zarr.py`, demonstrates how plots can be generated **directly from the stored Zarr data**.
+
+This script:
+
+- loads HEALPix data from the Zarr store,
+- selects **two arbitrary time samples**,
+- and creates plots of the regridded data.
+
+##### Platform compatibility note
+
+- On **Linux or macOS**, `xarray.open_zarr()` works as expected and the script runs successfully.
+- On **Windows with Python 3.11**, reopening Zarr stores via xarray may fail due to a known metadata decoding issue.
+
+The script is included for completeness and to document the **intended Zarr-based plotting workflow**, even though execution may be platform-dependent.
 
