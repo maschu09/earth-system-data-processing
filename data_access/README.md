@@ -14,7 +14,7 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 - **Downloads** daily ERA5 data (6-hourly timesteps) via the CDS API, with mock mode for testing
 - **Interpolates** every timestep from lat-lon to HEALPix (NSIDE=8 for 768 pixels, NSIDE=16 for 3,072 pixels)
 - **Appends immediately** to per-variable zarr stores as part of the daily processing chain
-- **Archives** processed files under `archive/YYYY/MM/` after successful processing
+- **Archives** uccessfully processed daily input files under `archive/YYYY/MM/` 
 - **Validates completeness** by checking zarr time entries before skipping a date
 
 **Key design choices:**
@@ -30,7 +30,7 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 
 ## Dataset Information: ERA5
 
-**ERA5** (ECMWF Reanalysis v5) is the state-of-the-art global climate reanalysis from the European Centre for Medium-Range Weather Forecasts. It blends observations (satellites, weather stations, aircraft) with model data via advanced data assimilation.
+**ERA5** (ECMWF Reanalysis v5) is global climate reanalysis from the European Centre for Medium-Range Weather Forecasts. It blends observations (satellites, weather stations, aircraft) with model data via advanced data assimilation.
 
 | Property | Details |
 |---|---|
@@ -39,14 +39,9 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 | **Variables** | 200+ including temperature, humidity, wind, pressure |
 | **Pressure levels** | 37 levels from surface to stratosphere |
 | **Coverage** | Global (0–360° longitude, −90–90° latitude) |
-| **Data latency** | ~3 months behind real-time |
+| **Data latency** | ~3 months behind real-time | The near-real time download is available but not quallity-controled
 
-**Sources:**
-- ECMWF ERA5: https://www.ecmwf.int/en/research/climate-reanalysis/era5
-- CDS: https://cds.climate.copernicus.eu
-- Hersbach et al. (2020): https://doi.org/10.1002/qj.3803
-
-## Understanding HEALPix Grids
+## HEALPix Grids
 
 ### What is HEALPix?
 
@@ -65,15 +60,15 @@ The pipeline outputs NSIDE=8 and NSIDE=16:
 
 ### Interpolation Method
 
-Data is regridded from ERA5's regular lat-lon grid to HEALPix using linear interpolation via `scipy.griddata()`. To prevent artifacts at the 0°/360° dateline, where lon=359° and lon=1° are physically adjacent, I duplicate source points with lon±360° shifts. This allows the interpolator to correctly find neighbors across the dateline, eliminating seams in the HEALPix output.
+Data is regridded from ERA5's regular lat-lon grid to HEALPix using linear interpolation via `scipy.griddata()`. To prevent artifacts at the 0°/360° dateline, where lon=359° and lon=1° are physically adjacent, I duplicate source points with lon±360° shifts. This allows the interpolator to correctly find neighbors across the dateline, reducing interpolation artifacts at the dateline.
 
 ---
 
 ## Zarr Storage Format
 
-Zarr stores N-dimensional arrays as a directory of small chunk files plus metadata. This makes it well-suited for time series pipelines because new timesteps can be appended without rewriting the whole dataset, and subsets of the data can be read efficiently. In this project, the main array is stored as `(time, pressure_level, npix)` and chunked by day so that each chunk contains one full daily field (4 timesteps/day). For the 5-day example, this results in an array of shape `(20, 5, 768)` for NSIDE=8 with a daily chunk shape of `(4, 5, 768)`. The store metadata (`zarr.json`) records the chunking and the codec pipeline used to store the data.
+Zarr stores N-dimensional arrays as a directory of small chunk files plus metadata. This makes it suitable for time series pipelines because new timesteps can be appended without rewriting the whole dataset, and subsets of the data can be read efficiently. In this project, the main array is stored as `(time, pressure_level, npix)` and chunked by day so that each chunk contains one full daily field (4 timesteps/day). For the 5-day example, this results in an array of shape `(20, 5, 768)` for NSIDE=8 with a daily chunk shape of `(4, 5, 768)`. The store metadata (`zarr.json`) records the chunking and the codec pipeline used to store the data.
 Each .zarr directory represents one array store. Inside the store, the data/ directory contains the chunked array values, while time/ and pressure_level/ store the corresponding coordinate arrays. 
-Chunk files are organized by chunk indices. With daily chunking (4 timesteps per chunk), chunk index 0 contains the first day of data, chunk index 1 the second day, and so on. This layout allows new days to be appended efficiently without rewriting existing data.
+Chunk files are organized by chunk indices. With daily chunking (4 timesteps per chunk), chunk index 0 contains the first day of data, chunk index 1 the second day, and so on. 
 ---
 
 ## Getting Started
@@ -90,7 +85,7 @@ Chunk files are organized by chunk indices. With daily chunking (4 timesteps per
 2. Install dependencies from `requirements.txt`.
 3. Configure the CDS API for real downloads.
 
-**CDS API setup** (for real mode only):
+**CDS API setup**:
 1. Register free account: https://cds.climate.copernicus.eu
 2. Get API key from Profile 
 3. Create `~/.cdsapirc`:
@@ -112,7 +107,7 @@ jupyter notebook era5_workflow.ipynb
 In the notebook:
 - Cell 3 has `MOCK_MODE = True` by default
 - Run all cells 
-- Pipeline completes in ~5 seconds with synthetic data
+- Pipeline completes quickly with synthetic data
 - Check results in `data/mock/`, `processed/mock/`, `archive/`, and `../zarr_data/`
 
 ---
@@ -135,7 +130,7 @@ start_date = None                   # Set for date range start
 end_date = None                     # Set for date range end
 ```
 
-**Invocation modes (automatic):**
+**Execution modes (controlled via notebook parameters):**
 
 | Configuration | Behavior |
 |---|---|
@@ -153,7 +148,7 @@ data_access/
   ├── data/
   │   ├── mock/              # Test files (when MOCK_MODE=True)
   │   └── real/              # Real downloads (when MOCK_MODE=False)
-  ├── processed/             # Processed copies before archiving(temporary storing)
+  ├── processed/             # Processed copies before archiving (temporary storing)
   │   ├── mock/
   │   └── real/
   ├── archive/               # Final files, organized by date
@@ -174,7 +169,7 @@ The zarr stores contain:
 - **data**: (time, pressure_level, healpix_pixel) array
 - **time**: Timestamps as datetime64[ns]
 - **pressure_level**: Pressure levels in hPa
-- **attrs**: Metadata (nside, variable, pixel count)
+- **attrs**: Metadata stored alongside the array (additional metadata lives in zarr.json)
 
 ---
 
@@ -200,7 +195,7 @@ Early testing revealed a critical issue: mock placeholder files would prevent re
 
 **2. Completeness Checking**
 
-Simply checking if an archived file exists is insufficient; interrupted downloads leave partial data. I implemented `check_day_completeness()`, which verifies that all expected timesteps (e.g. 4 for 6-hourly data) exist in the zarr time coordinate before deciding to skip a date. This handles network interruptions gracefully: rerunning the pipeline automatically reprocesses incomplete days.
+Simply checking if an archived file exists is insufficient; interrupted downloads leave partial data. I implemented `check_day_completeness()`, which verifies that all expected timesteps (e.g. 4 for 6-hourly data) exist in the zarr time coordinate before deciding to skip a date. This handles network interruptions nicely: rerunning the pipeline automatically reprocesses incomplete days.
 
 **3. Variable Name Fallback**
 
@@ -220,7 +215,8 @@ Comparison plots align the original ERA5 lat-lon data with the closest matching 
 
 **Colormaps**
 
-I use cmocean because it is designed for geophysical fields and preserves meaningful visual gradients across the full range of values. Some palettes are reasonably robust to color‑vision differences, but not all are fully colorblind‑safe, so for maximum accessibility cividis or viridis can be substituted(color-blind friendly).
+I use cmocean because it is designed for geophysical fields and preserves meaningful visual gradients across the full range of values. Some palettes are reasonably robust to color‑vision differences, but cividis or viridis can be substituted(color-blind friendly). 
+The plots also contain coastlines for the lat lon original plot. Unfortunately, I was unable to create coastlines for healpix plots.
 
 Example comparison plots (saved under `data_access/results/`):
 
@@ -289,13 +285,9 @@ Possible improvements:
 ## References
 
 1. Hersbach, H., Bell, B., Berrisfield, P., et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803
-
 2. Gorski, K. M., Hivon, E., Banday, A. J., et al. (2005). HEALPix: A framework for high-resolution discretization and fast analysis of data distributed on the sphere. *The Astrophysical Journal*, 622(2), 759–771. https://doi.org/10.1086/427976
-
 3. ECMWF ERA5 Documentation. https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation
-
 4. Zarr explanation. https://zarr-specs.readthedocs.io/en/latest/v3/core/index.html
-
 5. healpy Tutorial. https://healpy.readthedocs.io/en/latest/tutorial.html
 6. Limited-area HEALPix https://easy.gems.dkrz.de/Processing/healpix/limited_area_healpix.html
 ---
