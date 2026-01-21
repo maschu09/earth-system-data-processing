@@ -70,6 +70,8 @@ environment.yml.lock
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+data_processing/data
 data_access/imerg_day/
 data_access/test_imerg.h5
 data_access/data/
