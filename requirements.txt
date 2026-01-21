@@ -1,7 +1,9 @@
 # ERA5 Data Processing Pipeline - Requirements
 # Python 3.10+
 
-# Core dependencies
+# ============================================================================
+# CORE DEPENDENCIES (Required for basic functionality)
+# ============================================================================
 numpy>=1.21.0
 scipy>=1.7.0
 xarray>=2022.0.0
@@ -9,19 +11,20 @@ netCDF4>=1.5.7
 
 # HEALPix and spatial processing
 healpy>=1.15.0
-healpy-data>=1.15.0
 
 # Zarr storage and compression
 zarr>=3.0.0
 numcodecs>=0.11.0
 
-# Data visualization (optional but recommended)
+# ============================================================================
+# VISUALIZATION (Required for plotting)
+# ============================================================================
 matplotlib>=3.3.0
-cartopy>=0.21.0
+
 cmocean>=3.0.0
 
-# CDS API for real data download (optional, not needed for mock mode)
-cdsapi>=1.5.0
+
+cartopy>=0.21.0
 
 # Utilities
 astropy>=5.0.0

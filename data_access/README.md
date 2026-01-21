@@ -3,6 +3,7 @@
 **Author:** Yeganeh Khabbazian  
 **Date:** January 2026
 **Tool:** Used GitHub Copilot
+
 ---
 
 ## Overview
@@ -14,7 +15,7 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 - **Downloads** daily ERA5 data (6-hourly timesteps) via the CDS API, with mock mode for testing
 - **Interpolates** every timestep from lat-lon to HEALPix (NSIDE=8 for 768 pixels, NSIDE=16 for 3,072 pixels)
 - **Appends immediately** to per-variable zarr stores as part of the daily processing chain
-- **Archives** uccessfully processed daily input files under `archive/YYYY/MM/` 
+- **Archives** unccessfully processed daily input files under `archive/YYYY/MM/` 
 - **Validates completeness** by checking zarr time entries before skipping a date
 
 **Key design choices:**
@@ -47,8 +48,6 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 
 **HEALPix** is a genuinely curvilinear partition of the sphere into exactly equal-area quadrilaterals of varying shape. The base-resolution comprises twelve pixels in three rings around the poles and equator. The resolution of the grid is expressed by the parameter NSIDE, which defines the number of divisions along the side of a base-resolution pixel needed to reach a desired high-resolution partition. All pixel centers are placed on 4 × NSIDE − 1 rings of constant latitude and are equidistant in azimuth (on each ring).
 
-*Source: Gorski et al. (2005), https://arxiv.org/pdf/astro-ph/9905275*
-
 ### Used Two Resolutions
 
 The pipeline outputs NSIDE=8 and NSIDE=16:
@@ -69,6 +68,7 @@ Data is regridded from ERA5's regular lat-lon grid to HEALPix using linear inter
 Zarr stores N-dimensional arrays as a directory of small chunk files plus metadata. This makes it suitable for time series pipelines because new timesteps can be appended without rewriting the whole dataset, and subsets of the data can be read efficiently. In this project, the main array is stored as `(time, pressure_level, npix)` and chunked by day so that each chunk contains one full daily field (4 timesteps/day). For the 5-day example, this results in an array of shape `(20, 5, 768)` for NSIDE=8 with a daily chunk shape of `(4, 5, 768)`. The store metadata (`zarr.json`) records the chunking and the codec pipeline used to store the data.
 Each .zarr directory represents one array store. Inside the store, the data/ directory contains the chunked array values, while time/ and pressure_level/ store the corresponding coordinate arrays. 
 Chunk files are organized by chunk indices. With daily chunking (4 timesteps per chunk), chunk index 0 contains the first day of data, chunk index 1 the second day, and so on. 
+
 ---
 
 ## Getting Started
@@ -94,22 +94,6 @@ url: https://cds.climate.copernicus.eu/api/v2
 key: YOUR_UID:YOUR_API_KEY
 ```
 
-
-### Quick Start: Mock Mode Test
-
-No API setup required:
-
-```bash
-cd data_access
-jupyter notebook era5_workflow.ipynb
-```
-
-In the notebook:
-- Cell 3 has `MOCK_MODE = True` by default
-- Run all cells 
-- Pipeline completes quickly with synthetic data
-- Check results in `data/mock/`, `processed/mock/`, `archive/`, and `../zarr_data/`
-
 ---
 
 ## Notebook Usage
@@ -123,7 +107,7 @@ ERA5_CONFIG = {
     'pressure_levels': [975, 900, 800, 500, 300],
     'times': ['00:00', '06:00', '12:00', '18:00'],
     'format': 'netcdf',
-    'grid': None,                   # None = global; [N, W, S, E] = region
+    'grid': None,                   # None = global; regular lat-lon grid of 0.25     degrees for the reanalysis and 0.5 degrees for the uncertainty estimate
 }
 single_date = None                  # Set to process one date
 start_date = None                   # Set for date range start
@@ -207,7 +191,7 @@ Zarr time comparisons failed silently when numpy timestamps had different precis
 
 **5. Pressure Level Integrity**
 
-When a zarr store already exists, the pipeline verifies that incoming `pressure_levels` match the stored `pressure_level` metadata. If they differ, the write is rejected to prevent mixing incompatible datasets.
+When a zarr store already exists, the pipeline verifies that incoming `pressure_levels` match the stored `pressure_level` metadata. If they differ, the write is rejected to prevent mixing incompatible datasets. I also changed some part of the code to make it suitable for surface_level variables without depending on pressure level as an index.
 
 **6. Plot Consistency**
 
@@ -249,15 +233,15 @@ Daily chunking aligns well with the daily processing workflow and simplifies rep
 Processing time increases with the number of time steps, pressure levels, and especially with HEALPix resolution. Higher NSIDE values significantly increase interpolation cost, making resolution choice a key performance consideration.  
 The dominant runtime cost is the spatial interpolation from lat lon grids to HEALPix. For a single day, interpolation takes significantly longer than data download as data download was 1 -2 minutes(not a good network) but the rest took around 20 minutes.  
 
-What fails first?
+## Scaling Behavior and Bottlenecks
 - Interpolation becomes the bottleneck first as NSIDE and time span grow; `scipy.griddata` is approximately O(N × M) in practice and memory-heavy, recomputes triangulations each timestep, and does not reuse geometry across timesteps.  
 
-What becomes unusable?
-- The current daily chunking strategy becomes inefficient for multi-year ranges due to excessive metadata and file counts. Beyond O(10^3) days (a few years at 4 timesteps/day), coarser temporal chunking or chunk consolidation would be required to keep metadata overhead reasonable.  
+- The current daily chunking strategy becomes inefficient for multi-year ranges due to excessive metadata and file counts. Beyond a few years at 4 timesteps/day, coarser temporal chunking or chunk consolidation would be required to keep metadata overhead reasonable.  
+
 - Large Zarr stores with many small chunk files become slow to traverse and expensive for filesystem metadata; on shared HPC filesystems this can trigger inode pressure and slow directory operations.  
 
-What assumptions stop holding?
 - This workflow is not suitable beyond multi-year ranges without redesign of chunking and interpolation.  
+
 - The interpolation approach assumes per-timestep recomputation is acceptable. At higher NSIDE or longer time series, precomputed interpolation weights or dedicated spherical regridding libraries become necessary.  
 
 Limits to scaling include:  
@@ -265,7 +249,7 @@ Limits to scaling include:
 - **Network bandwidth** that bounds how fast daily files can be fetched.  
 - **Local disk** space and filesystem overhead from many Zarr files.  
 
-Possible improvements:  
+## Possible improvements:  
 
 -The dominant cost in the current workflow is the repeated spatial interpolation from latitude–longitude grids to HEALPix. Performance could be improved by precomputing interpolation weights and reusing them across timesteps, or by switching to dedicated spherical regridding libraries that are designed for repeated global transforms.
 
@@ -280,6 +264,7 @@ Possible improvements:
 -For very large datasets, filesystem performance can become a limiting factor due to the large number of small Zarr files. Using larger chunk sizes, consolidated metadata, or object-storage–oriented backends would help mitigate this issue.
 
 -In this project chunks are stored using zstd compression with a fast default setting(level 0). For larger datasets or long-term storage, the compression level could be adjusted to further reduce disk usage, at the cost of slightly slower write performance.
+
 ---
 
 ## References
