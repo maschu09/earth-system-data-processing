@@ -23,12 +23,20 @@ class ERA5HealpixPipeline:
                  single_zarr_file=True,
                  debug=False):
         self.data_dir = data_dir
+        self.netcdf_dir = os.path.join(data_dir, "netcdf_files/")
         self.redownload = redownload    # if True, it will re-download existing data
         self.single_zarr_file = single_zarr_file  # if True, saves all data in a single Zarr file   
         self.debug = debug              # if True, it will not download actual data
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
-        self.downloader = ERA5Downloader()
+        if not os.path.exists(self.netcdf_dir):
+            os.makedirs(self.netcdf_dir)
+        self.downloader = ERA5Downloader(data_dir=self.netcdf_dir)
+        
+        # Zarr file paths for single output mode
+        self.zarr_nside8_path = os.path.join(self.data_dir, "era5_healpix_nside8_consolidated.zarr")
+        self.zarr_nside16_path = os.path.join(self.data_dir, "era5_healpix_nside16_consolidated.zarr")
+        self._zarr_initialized = False
 
     def process_and_archive_daily_data(
         self,
@@ -40,19 +48,21 @@ class ERA5HealpixPipeline:
         assert not (end_date and fixed_date), "Provide either end_date or fixed_date, not both."
 
         start_date, end_date = self._get_start_and_end_dates(start_date, end_date, fixed_date)
+        
+        # Reset zarr initialization flag for new pipeline run
+        self._zarr_initialized = False
 
         already_downloaded_dates = self._get_already_downloaded_dates()
         current_date = start_date
         while current_date <= end_date:
             if current_date in already_downloaded_dates and not self.redownload:
                 print(f"Data for {current_date} already downloaded. Skipping.")
-                current_date += timedelta(days=1)
-                continue
-            if not self.debug:
+                nc_fpath = os.path.join(self.netcdf_dir, f"{current_date.strftime('%Y-%m-%d')}.nc")
+            elif not self.debug:
                 nc_fpath = self.downloader.download_data_for_date(current_date)
                 ds_hp8, ds_hp16 = self.process_lat_lon_data(nc_fpath)
                 if self.single_zarr_file:
-                    pass
+                    self._save_to_consolidated_zarr(ds_hp8, ds_hp16)
                 else:
                     ds_hp8.to_zarr(
                         os.path.join(self.data_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
@@ -63,7 +73,8 @@ class ERA5HealpixPipeline:
                         mode='w'
                     )
                 logger.info(f"Processed and saved HEALPix data for {current_date}")
-                self.clean_up_temp_files(nc_fpath)
+            else:
+                logger.info(f"Debug mode: Skipping download and processing for {current_date}")
             current_date += timedelta(days=1)
         
 
@@ -84,8 +95,8 @@ class ERA5HealpixPipeline:
         
     def _get_already_downloaded_dates(self):
         already_downloaded_dates = []
-        for fname in os.listdir(self.data_dir):
-            if not os.path.isfile(os.path.join(self.data_dir, fname)): continue
+        for fname in os.listdir(self.netcdf_dir):
+            if not os.path.isfile(os.path.join(self.netcdf_dir, fname)): continue
             try:
                 already_downloaded_dates.append(
                     datetime.strptime(fname.split('.')[0], "%Y-%m-%d").date()
@@ -100,20 +111,42 @@ class ERA5HealpixPipeline:
         ds_hp8 = create_healpix_dataset(ds_latlon, nside=8)
         ds_hp16 = create_healpix_dataset(ds_latlon, nside=16)
         return ds_hp8, ds_hp16
-
-    def clean_up_temp_files(self, file_path):
+    
+    def _save_to_consolidated_zarr(self, ds_hp8, ds_hp16):
+        """
+        Save HEALPix datasets to consolidated zarr files.
+        Creates files on first call, appends on subsequent calls.
+        
+        Parameters:
+        -----------
+        ds_hp8 : xr.Dataset
+            HEALPix dataset with nside=8
+        ds_hp16 : xr.Dataset
+            HEALPix dataset with nside=16
+        """
         try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                logger.debug(f"Removed temporary file: {file_path}")
+            if not self._zarr_initialized:
+                # First iteration: create new zarr files
+                logger.info(f"Creating consolidated zarr files")
+                save_healpix_to_zarr(ds_hp8, nside=8, output_path=self.zarr_nside8_path, mode='w')
+                save_healpix_to_zarr(ds_hp16, nside=16, output_path=self.zarr_nside16_path, mode='w')
+                self._zarr_initialized = True
+                logger.info(f"Initialized zarr files at {self.zarr_nside8_path} and {self.zarr_nside16_path}")
+            else:
+                # Subsequent iterations: append to existing zarr files
+                logger.debug(f"Appending to existing zarr files")
+                append_to_zarr(ds_hp8, self.zarr_nside8_path)
+                append_to_zarr(ds_hp16, self.zarr_nside16_path)
+                logger.debug(f"Successfully appended data to zarr stores")
         except Exception as e:
-            logger.error(f"Error removing temporary file {file_path}: {e}")
+            logger.error(f"Error saving to consolidated zarr: {type(e).__name__}: {e}")
+            raise
 
 if __name__ == "__main__":
     pipeline = ERA5HealpixPipeline(debug=False,
         single_zarr_file=True)
     pipeline.process_and_archive_daily_data(
-        start_date=date(2024,12,2),
+        start_date=date(2024,12,1),
         end_date=date(2024,12,3)
     )
 
