@@ -118,6 +118,8 @@ def create_healpix_dataset(ds_latlon, nside):
     ds_healpix = xr.Dataset(
         data_vars=data_vars,
         coords={
+            'time': ds_latlon.valid_time.values,
+            'level': ds_latlon.pressure_level.values,
             'pixel': np.arange(npix)
         },
         attrs={

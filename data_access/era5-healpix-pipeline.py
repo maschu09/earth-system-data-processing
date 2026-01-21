@@ -1,9 +1,11 @@
+from math import sin
 import os
 import logging
 import xarray as xr
 from era5_downloader import ERA5Downloader
 from healpix_converter import create_healpix_dataset
 from datetime import date, datetime, timedelta, timezone
+from zarr_utils import save_healpix_to_zarr, append_to_zarr
 
 
 # Configure logging
@@ -15,9 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class ERA5HealpixPipeline:
-    def __init__(self, data_dir="./downloads/era5/healpix/", redownload=False, debug=False):
+    def __init__(self, 
+                 data_dir="./downloads/era5/healpix/", 
+                 redownload=False,
+                 single_zarr_file=True,
+                 debug=False):
         self.data_dir = data_dir
         self.redownload = redownload    # if True, it will re-download existing data
+        self.single_zarr_file = single_zarr_file  # if True, saves all data in a single Zarr file   
         self.debug = debug              # if True, it will not download actual data
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
@@ -44,14 +51,17 @@ class ERA5HealpixPipeline:
             if not self.debug:
                 nc_fpath = self.downloader.download_data_for_date(current_date)
                 ds_hp8, ds_hp16 = self.process_lat_lon_data(nc_fpath)
-                ds_hp8.to_zarr(
-                    os.path.join(self.data_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
-                    mode='w'
-                )
-                ds_hp16.to_zarr(
-                    os.path.join(self.data_dir, f"era5_healpix_nside16_{current_date.strftime('%Y-%m-%d')}.zarr"),
-                    mode='w'
-                )
+                if self.single_zarr_file:
+                    pass
+                else:
+                    ds_hp8.to_zarr(
+                        os.path.join(self.data_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
+                        mode='w'
+                    )
+                    ds_hp16.to_zarr(
+                        os.path.join(self.data_dir, f"era5_healpix_nside16_{current_date.strftime('%Y-%m-%d')}.zarr"),
+                        mode='w'
+                    )
                 logger.info(f"Processed and saved HEALPix data for {current_date}")
                 self.clean_up_temp_files(nc_fpath)
             current_date += timedelta(days=1)
@@ -100,9 +110,10 @@ class ERA5HealpixPipeline:
             logger.error(f"Error removing temporary file {file_path}: {e}")
 
 if __name__ == "__main__":
-    pipeline = ERA5HealpixPipeline(debug=False)
+    pipeline = ERA5HealpixPipeline(debug=False,
+        single_zarr_file=True)
     pipeline.process_and_archive_daily_data(
-        start_date=date(2024,12,1),
-        end_date=date(2024,12,5)
+        start_date=date(2024,12,2),
+        end_date=date(2024,12,3)
     )
 
