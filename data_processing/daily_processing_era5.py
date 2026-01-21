@@ -6,6 +6,31 @@ import healpy as hp
 import xarray as xr
 import cdsapi
 
+def already_processed(zarr_path, nside_list):
+    nside_dict = {nside: np.array([], dtype="datetime64[D]") for nside in nside_list}
+
+    if not os.path.exists(zarr_path):
+        return np.array([], dtype="datetime64[D]"), nside_dict
+
+    per_nside_sets = []
+
+    for nside in nside_list:
+        group = f"nside={nside}"
+        try:
+            hp_ds = xr.open_zarr(zarr_path, group=group)
+        except (KeyError, FileNotFoundError):
+            # missing group → no date is fully processed
+            return np.array([], dtype="datetime64[D]"), nside_dict
+
+        dates = np.unique(hp_ds.time.values.astype("datetime64[D]"))
+        nside_dict[nside] = dates
+        per_nside_sets.append(set(dates))
+
+    # intersection: only dates present in ALL nsides
+    processed_dates = sorted(set.intersection(*per_nside_sets))
+
+    return np.array(processed_dates, dtype="datetime64[D]"), nside_dict
+
 
 def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str = None, date: str = None,
                 level_list: list = [975, 900, 800, 500, 300],
@@ -14,13 +39,16 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
                 nside_list: list = [8, 16]
                     ):
 
+    zarr_file = f"era5_healpix_{param_shortname}.zarr"
+    zarr_path = os.path.join(save_path, zarr_file)
+
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     
-    already_processed_dates = [f.replace(".zarr", "") for f in os.listdir(save_path)]
+    already_processed_dates, dates_by_nside = already_processed(zarr_path, nside_list)
     
     if date is not None: # process single date
-        dates_to_process = [date] if date not in already_processed_dates else []
+        dates_to_process = [date] if np.datetime64(date, "D") not in already_processed_dates else []
     else:
         if end_date is None: # process until today
             end_date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -31,8 +59,8 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
         assert start_dt <= end_dt, "Start date must be before end date"
 
         delta = end_dt - start_dt
-        dates_to_process = [(start_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta.days + 1)
-                            if (start_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d") not in already_processed_dates]
+        dates_to_process = [(start_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta.days + 1)]
+        dates_to_process = [d for d in dates_to_process if np.datetime64(d, "D") not in already_processed_dates]
 
     c = cdsapi.Client()
     for d in dates_to_process:
@@ -58,8 +86,8 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
 
         ## transform to healpix
         maps = {nside: [] for nside in nside_list}
-        times = []
-        levels = []
+        times = {nside: [] for nside in nside_list}
+        levels = {nside: [] for nside in nside_list}
 
         pressure_levels = ds.pressure_level.values
         time_steps = ds.valid_time.values
@@ -79,6 +107,10 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
                 phi = np.deg2rad(lon_grid)
 
                 for nside in nside_list:
+
+                    if np.datetime64(t, "D") in dates_by_nside[nside]:
+                        continue  # skip already processed dates for this nside
+
                     pixel_indices = hp.ang2pix(nside, theta, phi)
                     m = np.zeros(hp.nside2npix(nside))
                     counts = np.zeros(hp.nside2npix(nside))
@@ -92,14 +124,18 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
                     m[mask] /= counts[mask]
 
                     maps[nside].append(m)
-
-                times.append(np.datetime64(t))
-                levels.append(int(p))
+                    times[nside].append(np.datetime64(t))
+                    levels[nside].append(int(p))
 
         ## save as zarr
-        zarr_path = os.path.join(save_path, f"{d}.zarr")
         for nside, data_list in maps.items(): # group by nside
+
+            if len(data_list) == 0:
+                continue  # nothing new for this nside
+
             data = np.stack(data_list, axis=0) # stack pixmaps
+            times_ = times[nside]
+            levels_ = levels[nside]
 
             ds_hp = xr.Dataset(
                 {
@@ -107,8 +143,8 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
                 },
                 coords={
                     "sample": np.arange(len(data_list)),
-                    "time": ("sample", times),
-                    "level": ("sample", levels),
+                    "time": ("sample", times_),
+                    "level": ("sample", levels_),
                     "pix": np.arange(data.shape[1]),
                 }
             )
@@ -116,27 +152,37 @@ def process_data(save_path: str, start_date: str = "1940-01-01", end_date: str =
             ds_hp = (
                 ds_hp
                 .set_index(sample=("time", "level"))
-                .unstack("sample") # reshape to have time and level as dimensions
+                .unstack("sample")
                 .chunk(
                     {
                         "time": 1,
                         "level": 1,
-                        "pix": -1 # all pixels in one chunk
+                        "pix": -1
                     }
                 )
             )
 
             group = f"nside={nside}"
-            mode = "w" if not os.path.exists(os.path.join(zarr_path, group)) else "a" # append if group exists
-            ds_hp.to_zarr(
-                zarr_path,
-                group=group,
-                mode=mode,
-                append_dim="time" if mode == "a" else None # append along time dimension
-            )
+            group_path = os.path.join(zarr_path, group)
+
+            if not os.path.exists(group_path):
+                # first write → create dataset
+                ds_hp.to_zarr(
+                    zarr_path,
+                    group=group,
+                    mode="w"
+                )
+            else:
+                # subsequent days → append
+                ds_hp.to_zarr(
+                    zarr_path,
+                    group=group,
+                    mode="a",
+                    append_dim="time"
+                )
 
         ## remove temp file
-        os.remove(file_pth)
+        # os.remove(file_pth)
 
 if __name__ == "__main__":
 

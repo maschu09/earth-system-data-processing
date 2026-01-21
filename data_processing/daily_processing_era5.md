@@ -8,8 +8,25 @@ To specify the other parameters, use the `--levels`, `--params`, `--shortname` a
 
 While not explicitly mentioned in the exercise description, I added a start and end date for retrieving data within a specified interval, which is needed for the rest of the task. I thus implemented in the following way:
 - start and end date are optional arguments; if no start date is given, the oldest record is used; if no end date is given, the current date is used
-- the function then checks the output directory and looks for any missing files to fetch between the start and end date
+- the function then checks the output zarr and looks for any missing dates to fetch between the start and end date - if there are inconsistencies between the dates present for different NSIDE values, these will be mitigated after script execution, making it possible to add different NSIDE values to the same zarr after the initial creation. 
+
+    More formally:
+
+    Assume a zarr store already existis with NSIDE values A, B, C.
+    
+    - nside A has data for dates [a, b, c, d, e] 
+    - nside B has data for dates [a, b, c] 
+    - nside C has data for dates [c, d, e] 
+    
+    The user requests time-interval from a-g, so 
+    - for nside A, [f, g] need to be added 
+    - nside B, [c, d, e, f, g] need to be added 
+    - nside C, [a, b, c, f, g] need to be added
+
+    Thus, only  date c will be ommited from the processing loop. After execution, all NSIDE groups will contain the data for the whole time-interval a-g.
+
 - still possible to pass single date to retrieve data for a single day
+
 
 ## CDS API Request
 
@@ -34,7 +51,7 @@ I thus create a single healpix map for every combination of pressure-level, time
 
 ## Saving in Zarr format
 
-The Healpix data is written to one Zarr store per day (`<date>.zarr`), with **one group per spatial resolution**:
+The Healpix data is written to one Zarr store, with **one group per spatial resolution**:
 
 * `nside=8`
 * `nside=16`
@@ -58,3 +75,7 @@ I chose the chunking strategy to match typical access patterns:
 * `pix: -1` – stores the full Healpix map in a single chunk.
 
 This results in chunks of shape `(1, 1, Npix)`, which avoids fragmenting the spatial dimension while keeping temporal and vertical access efficient.
+
+**Appending/Inserting data**
+
+Data is appended to the dataset along the time domain for each NSIDE value. For this to work correctly, the same level configuration needs to be chosen. Note, if the dataset for an arbitrary NSIDE value has gaps (i.e. a day is missing), in the next execution of the script, this day will be processed and appended, but not _inserted_ in the traditional sense. This will result in a possibly unordered time-list within the dataset, which can be easily fixed by sorting this variable when loading the data.
