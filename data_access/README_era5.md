@@ -15,7 +15,7 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 - **Downloads** daily ERA5 data (6-hourly timesteps) via the CDS API, with mock mode for testing
 - **Interpolates** every timestep from lat-lon to HEALPix (NSIDE=8 for 768 pixels, NSIDE=16 for 3,072 pixels)
 - **Appends immediately** to per-variable zarr stores as part of the daily processing chain
-- **Archives** unccessfully processed daily input files under `archive/YYYY/MM/` 
+- **Archives** unsuccessfully processed daily input files under `archive/YYYY/MM/` 
 - **Validates completeness** by checking zarr time entries before skipping a date
 
 **Key design choices:**
@@ -40,7 +40,7 @@ This project implements an automated pipeline to download ERA5 climate reanalysi
 | **Variables** | 200+ including temperature, humidity, wind, pressure |
 | **Pressure levels** | 37 levels from surface to stratosphere |
 | **Coverage** | Global (0–360° longitude, −90–90° latitude) |
-| **Data latency** | ~3 months behind real-time | The near-real time download is available but not quallity-controled
+| **Data latency** | ~3 months behind real-time | The near-real time download is available but not quallity-controled. The last 5 days are not available.
 
 ## HEALPix Grids
 
