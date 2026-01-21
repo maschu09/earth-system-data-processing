@@ -60,21 +60,25 @@ class ERA5HealpixPipeline:
                 nc_fpath = os.path.join(self.netcdf_dir, f"{current_date.strftime('%Y-%m-%d')}.nc")
             elif not self.debug:
                 nc_fpath = self.downloader.download_data_for_date(current_date)
-                ds_hp8, ds_hp16 = self.process_lat_lon_data(nc_fpath)
-                if self.single_zarr_file:
-                    self._save_to_consolidated_zarr(ds_hp8, ds_hp16)
-                else:
-                    ds_hp8.to_zarr(
-                        os.path.join(self.data_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
-                        mode='w'
-                    )
-                    ds_hp16.to_zarr(
-                        os.path.join(self.data_dir, f"era5_healpix_nside16_{current_date.strftime('%Y-%m-%d')}.zarr"),
-                        mode='w'
-                    )
-                logger.info(f"Processed and saved HEALPix data for {current_date}")
             else:
                 logger.info(f"Debug mode: Skipping download and processing for {current_date}")
+                continue
+            ds_hp8, ds_hp16 = self.process_lat_lon_data(nc_fpath)
+            print(f"ds_hp8 shape: {ds_hp8.dims}")
+            print(f"ds_hp8 time length: {len(ds_hp8.time)}")
+            print(f"ds_hp8 data vars: {list(ds_hp8.data_vars)}")
+            if self.single_zarr_file:
+                self._save_to_consolidated_zarr(ds_hp8, ds_hp16)
+            else:
+                ds_hp8.to_zarr(
+                    os.path.join(self.data_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
+                    mode='w'
+                )
+                ds_hp16.to_zarr(
+                    os.path.join(self.data_dir, f"era5_healpix_nside16_{current_date.strftime('%Y-%m-%d')}.zarr"),
+                    mode='w'
+                )
+            logger.info(f"Processed and saved HEALPix data for {current_date}")
             current_date += timedelta(days=1)
         
 
