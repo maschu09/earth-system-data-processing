@@ -42,6 +42,7 @@ data_format = {"format": 'netcdf', "file_ending": '.nc'} # Downstream Processing
 grid_res = ['0.25', '0.25'] # [res_long, res_lat] resolution of the grid for the download. The specified 0.25° are the default resolution for atmospheric data in the ERA5 Dataset
 
 #====== storage config =======#
+
 collection_short_name='era5' #short name used for data_storage
 storage_path='../data/'
 unprocessed_path=f'{collection_short_name}_regular_grid/'
@@ -53,6 +54,9 @@ zarr_append_dim='time' #in the current state of this script only time makes sens
 nsides = [8, 16]
 interpolation_method = 'linear' # methode for the interpolation to healpix (one of "linear", "nearest", "zero", "slinear", "quadratic", "cubic", "quintic", "polynomial")
 
+#====== plotting config ======#
+plotting_variable_sn='q' # must be the short name of the variable you want to plot. The short names of the variables can be found in the table on the link above.
+plotting_pressure_level=975
 # <><><><><><><><><><> END CONFIG <><><><><><><><><><> #
 
 
@@ -352,9 +356,15 @@ def plot_two_samples(_time_chunks, _hp_grids):
         _complete_path = storage_path + unprocessed_path + display_time["file_name"] + data_format["file_ending"]
         ds_unprocessed = xr.open_dataset(_complete_path)
         ds_processed_list = [xr.open_zarr(zarr_path, group=grid["name"]) for grid in _hp_grids]
-        a_unprocessed = ds_unprocessed['q'].sel(pressure_level=975, valid_time=display_time["timestamp"])
+        a_unprocessed = ds_unprocessed[plotting_variable_sn].sel(
+            pressure_level=plotting_pressure_level,
+            valid_time=display_time["timestamp"]
+        )
         a_processed_list = [
-            pix_to_grid_interp(ds_processed['q'].sel(level=975, time=display_time["timestamp"])) #convert to regular grid
+            pix_to_grid_interp(ds_processed[plotting_variable_sn].sel(  #convert to regular grid
+                level=plotting_pressure_level,
+                time=display_time["timestamp"]
+            ))
             for ds_processed
             in ds_processed_list
         ]
@@ -362,7 +372,7 @@ def plot_two_samples(_time_chunks, _hp_grids):
         plot_comparison(
             data_arrays=[a_unprocessed] + a_processed_list,
             names=['Original'] + [grid["name"] for grid in _hp_grids],
-            title=f'Specific humidity at 975 hPa on {display_time["timestamp"]}'
+            title=f'Specific humidity at {plotting_pressure_level} hPa on {display_time["timestamp"]}'
         )
     input("Press Enter to exit") # needed so the interactive plot will stay open
 
