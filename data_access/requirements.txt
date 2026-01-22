@@ -1,0 +1,21 @@
+# Core data processing and array manipulation
+numpy>=1.20.0
+xarray>=0.19.0
+netCDF4>=1.5.6
+
+# HEALPix support
+healpy>=1.14.0
+
+# Zarr storage format
+zarr>=2.10.0
+
+# CDS API for ERA5 data access
+cdsapi>=0.5.1
+
+# Visualization (for notebooks)
+matplotlib>=3.4.0
+cartopy>=0.19.0
+
+# Jupyter support
+jupyter>=1.0.0
+ipython>=7.20.0
