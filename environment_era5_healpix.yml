@@ -1,0 +1,27 @@
+name: era5-healpix
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.12
+
+  # core scientific stack
+  - numpy
+  - scipy
+  - xarray
+
+  # data formats / storage
+  - netcdf4
+  - h5netcdf
+  - zarr
+
+  # ERA5 / HEALPix
+  - cdsapi
+  - healpy
+
+  # plotting
+  - matplotlib
+  - cartopy
+
+  # interactive / utilities
+  - ipython
