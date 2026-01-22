@@ -12,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ERA5Downloader:
-    def __init__(self, config=None, data_dir="./downloads/era5/healpix/"):
+    def __init__(self, config=None, data_dir="./downloads/era5/netcdf/"):
         """
         Docstring for __init__
         

@@ -18,24 +18,24 @@ logger = logging.getLogger(__name__)
 
 class ERA5HealpixPipeline:
     def __init__(self, 
-                 data_dir="./downloads/era5/healpix/", 
+                 data_dir="./downloads/era5/", 
                  redownload=False,
                  single_zarr_file=True,
                  debug=False):
-        self.data_dir = data_dir
-        self.netcdf_dir = os.path.join(data_dir, "netcdf_files/")
+        self.healpix_dir = os.path.join(data_dir, "healpix/")
+        self.netcdf_dir = os.path.join(data_dir, "netcdf/")
         self.redownload = redownload    # if True, it will re-download existing data
         self.single_zarr_file = single_zarr_file  # if True, saves all data in a single Zarr file   
         self.debug = debug              # if True, it will not download actual data
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
+        if not os.path.exists(self.healpix_dir):
+            os.makedirs(self.healpix_dir)
         if not os.path.exists(self.netcdf_dir):
             os.makedirs(self.netcdf_dir)
         self.downloader = ERA5Downloader(data_dir=self.netcdf_dir)
         
         # Zarr file paths for single output mode
-        self.zarr_nside8_path = os.path.join(self.data_dir, "era5_healpix_nside8_consolidated.zarr")
-        self.zarr_nside16_path = os.path.join(self.data_dir, "era5_healpix_nside16_consolidated.zarr")
+        self.zarr_nside8_path = os.path.join(self.healpix_dir, "era5_healpix_nside8_consolidated.zarr")
+        self.zarr_nside16_path = os.path.join(self.healpix_dir, "era5_healpix_nside16_consolidated.zarr")
         self._zarr_initialized = False
 
     def process_and_archive_daily_data(
@@ -62,6 +62,7 @@ class ERA5HealpixPipeline:
                 nc_fpath = self.downloader.download_data_for_date(current_date)
             else:
                 logger.info(f"Debug mode: Skipping download and processing for {current_date}")
+                current_date += timedelta(days=1)
                 continue
             ds_hp8, ds_hp16 = self.process_lat_lon_data(nc_fpath)
             print(f"ds_hp8 shape: {ds_hp8.dims}")
@@ -71,11 +72,11 @@ class ERA5HealpixPipeline:
                 self._save_to_consolidated_zarr(ds_hp8, ds_hp16)
             else:
                 ds_hp8.to_zarr(
-                    os.path.join(self.data_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
+                    os.path.join(self.healpix_dir, f"era5_healpix_nside8_{current_date.strftime('%Y-%m-%d')}.zarr"),
                     mode='w'
                 )
                 ds_hp16.to_zarr(
-                    os.path.join(self.data_dir, f"era5_healpix_nside16_{current_date.strftime('%Y-%m-%d')}.zarr"),
+                    os.path.join(self.healpix_dir, f"era5_healpix_nside16_{current_date.strftime('%Y-%m-%d')}.zarr"),
                     mode='w'
                 )
             logger.info(f"Processed and saved HEALPix data for {current_date}")
@@ -147,10 +148,9 @@ class ERA5HealpixPipeline:
             raise
 
 if __name__ == "__main__":
-    pipeline = ERA5HealpixPipeline(debug=False,
-        single_zarr_file=True)
+    pipeline = ERA5HealpixPipeline(debug=True, single_zarr_file=True)
     pipeline.process_and_archive_daily_data(
         start_date=date(2024,12,1),
-        end_date=date(2024,12,3)
+        end_date=date(2024,12,5)
     )
 
